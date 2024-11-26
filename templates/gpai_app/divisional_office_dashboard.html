@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Divisional Office Dashboard</title>
+    <style>
+        #map {
+            height: 500px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .post-office-list {
+            margin: 20px 0;
+        }
+        .post-office-list h2 {
+            margin-bottom: 10px;
+        }
+        .post-office-list ul {
+            list-style: none;
+            padding: 0;
+        }
+        .post-office-list li {
+            margin-bottom: 5px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to the Divisional Office Dashboard</h1>
+    <p>User: {{ user_data.name }}</p>
+
+    <!-- Display the list of post offices -->
+    <!-- Map Container -->
+    <div id="map"></div>
+    <div class="post-office-list">
+        <h2>Post Offices in this Division:</h2>
+        <ul>
+            {% for office in post_offices %}
+            <li>
+                <strong>{{ office.name }}</strong><br>
+                Pincode: {{ office.pincode }}<br>
+                Branch Type: {{ office.branch_type }}<br>
+                Delivery Status: {{ office.delivery_status }}<br>
+            </li>
+            {% empty %}
+            <p>No post offices found in this division.</p>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <script>
+        let map;
+
+        function initMap() {
+            // Initialize the map with a default center (this will be adjusted dynamically)
+            const map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: 20.5937, lng: 78.9629 }, // Default center: India
+                zoom: 5, // Default zoom level (will adjust dynamically based on bounds)
+            });
+        
+            // Create a LatLngBounds object to adjust the map dynamically
+            const bounds = new google.maps.LatLngBounds();
+        
+            // Load post offices data from the JSON context variable
+            const postOffices = JSON.parse('{{ post_offices_json|safe }}');
+        
+            // Add markers for each post office
+            postOffices.forEach((office) => {
+                const position = { lat: office.latitude, lng: office.longitude };
+        
+                // Create a marker
+                const marker = new google.maps.Marker({
+                    position: position,
+                    map: map,
+                    title: office.name,
+                });
+        
+                // Extend the bounds to include this marker
+                bounds.extend(position);
+        
+                // Create an info window
+                const infoWindow = new google.maps.InfoWindow({
+                    content: `<div>
+                        <strong>${office.name}</strong><br>
+                        Pincode: ${office.pincode}<br>
+                        Branch Type: ${office.branch_type}<br>
+                        Delivery Status: ${office.delivery_status}
+                    </div>`,
+                });
+        
+                // Add a click listener to open the info window
+                marker.addListener("click", () => {
+                    infoWindow.open(map, marker);
+                });
+            });
+        
+            // Automatically fit the map to the bounds of the markers
+            map.fitBounds(bounds);
+        }
+        
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDOYZvj20isw_zi_d1iuCazAKVoBgssNJY&callback=initMap" async defer></script>
+</body>
+</html>
