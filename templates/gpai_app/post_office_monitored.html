@@ -1,13 +1,262 @@
-<!-- post_office_monitored.html -->
 <!DOCTYPE html>
+{% load static %}
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Post Offices</title>
+    <style>
+        /* Navbar styling */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #000000;
+            padding: 10px 20px;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    
+        .navbar .logo {
+            display: flex;
+            align-items: center;
+        }
+    
+        .navbar .logo img {
+            height: 50px;
+            margin-right: 15px;
+        }
+    
+        .navbar .logo span {
+            font-size: 22px;
+            font-weight: bold;
+            color: #f0f0f0;
+            text-align: center;
+        }
+    
+        .navbar .nav-links {
+            list-style: none;
+            display: flex;
+            gap: 20px;
+            margin: 0;
+            padding: 0;
+        }
+    
+        .navbar .nav-links li {
+            display: inline;
+        }
+    
+        .navbar .nav-links a {
+            text-decoration: none;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+    
+        .navbar .nav-links a:hover {
+            background-color: #575757;
+            transform: scale(1.05);
+        }
+    
+        /* Body styles */
+        #map {
+            height: 500px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+    
+        .post-office-list {
+            margin: 20px 0;
+        }
+    
+        .post-office-list h2 {
+            margin-bottom: 10px;
+            font-size: 24px;
+            color: #333;
+        }
+    
+        .post-office-list ul {
+            list-style: none;
+            padding: 0;
+        }
+    
+        .post-office-list li {
+            margin-bottom: 5px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        /* Container for page content */
+        .container {
+            margin: 20px auto;
+            max-width: 90%;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Page Title */
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        /* Search Bar */
+        .form-inline input[type="text"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            width: 300px;
+        }
+
+        .btn-primary {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        /* Table Styling */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .table, .table th, .table td {
+            border: 1px solid #ddd;
+        }
+
+        .table th {
+            background-color: #f4f4f4;
+            color: #333;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .table td {
+            text-align: center;
+            padding: 10px;
+        }
+
+        /* Cleanliness Badge Styling */
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            color: white;
+            font-size: 12px;
+            text-transform: capitalize;
+        }
+
+        .badge-success {
+            background-color: #28a745;
+        }
+
+        .badge-danger {
+            background-color: #dc3545;
+        }
+
+        /* No Results Message */
+        .text-center {
+            text-align: center;
+            color: #777;
+        }
+    </style>    
 </head>
 <body>
-    <h1>Post Offices Monitored</h1>
-    <!-- Add content here -->
+    <nav class="navbar">
+        <!-- Logo and title -->
+        <div class="logo">
+            <img src="{% static 'images/logo.jpg' %}" alt="Logo">
+            <span>Divisional office of {{ divisional_office_name }}</span>
+        </div>
+
+        <!-- Navigation links -->
+        <ul class="nav-links">
+            <li><a href="#map">Map</a></li>
+            <li><a href="{% url 'post_office_monitored' %}">Post Offices</a></li>
+            <li><a href="/profile">Profile</a></li>
+            <li><a href="{% url 'logout' %}">Logout</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <h2>Post Office Monitoring under {{ divisional_office_name }}</h2>
+        <!-- Search Bar -->
+        <form method="get" class="form-inline my-3">
+            <input 
+                type="text" 
+                name="search" 
+                placeholder="Search post offices..." 
+                value="{{ search_query }}" 
+                class="form-control mr-2"
+            >
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+    
+        <!-- Results Table -->
+        <table class="table table-bordered mt-4">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Post Office Name</th>
+                    <th>Division Name</th>
+                    <th>Latitude</th>
+                    <th>Longitude</th>
+                    <th>Timestamp</th>
+                    <th>Cleanliness Status</th>
+                    <!-- New Columns -->
+                    <th>Cleanliness Score</th>
+                    <th>Waste Type</th>
+                    <th>Is Clean</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if images %}
+                    {% for image in images %}
+                    <tr>
+                        <td>{{ image.post_office.name }}</td>
+                        <td>{{ image.post_office.division }}</td>
+                        <td>{{ image.latitude }}</td>
+                        <td>{{ image.longitude }}</td>
+                        <td>{{ image.timestamp }}</td>
+                        <td>
+                            <span 
+                                class="badge 
+                                {% if image.cleanliness_status == 'Clean' %}badge-success{% else %}badge-danger{% endif %}">
+                                {{ image.cleanliness_status }}
+                            </span>
+                        </td>
+                        <!-- New Columns for Cleanliness Score, Waste Type, and Is Clean -->
+                        <td>{{ image.cleanliness_score }}</td>
+                        <td>{{ image.waste_type }}</td>
+                        <td>
+                            <span 
+                                class="badge 
+                                {% if image.is_clean %}badge-success{% else %}badge-danger{% endif %}">
+                                {% if image.is_clean %}Yes{% else %}No{% endif %}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center">No results found.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>    
 </body>
 </html>

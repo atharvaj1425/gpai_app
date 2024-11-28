@@ -8,6 +8,11 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
 import json
 from django.contrib.auth import logout
+import requests  # For downloading images and interacting with Cloudinary
+import google.generativeai as genai
+from io import BytesIO
+from django.utils.timezone import now
+from .models import Image, PostOffice  # Importing models
 
 # Replace with your Google Maps Geolocation API key
 GOOGLE_MAPS_API_KEY = "AIzaSyDOYZvj20isw_zi_d1iuCazAKVoBgssNJY"
@@ -134,8 +139,186 @@ def divisional_office_dashboard(request):
     }
     return render(request, 'gpai_app/divisional_office_dashboard.html', context)
 
+# Configure the API key
+genai.configure(api_key="AIzaSyABso2hO7CjatfKPB6WoaP48QGeKZ8YsEw")
+
+# Model Configuration
+MODEL_CONFIG = {
+    "temperature": 0.2,
+    "top_p": 1,
+    "top_k": 32,
+    "max_output_tokens": 4096,
+}
+
+# Safety Settings of Model
+safety_settings = [
+    {
+        "category": "HARM_CATEGORY_HARASSMENT",
+        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+    },
+    {
+        "category": "HARM_CATEGORY_HATE_SPEECH",
+        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+    },
+    {
+        "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+    },
+    {
+        "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+    }
+]
+
+# Initialize the Gemini model
+model = genai.GenerativeModel(
+    model_name="gemini-1.5-flash",
+    generation_config=MODEL_CONFIG,
+    safety_settings=safety_settings
+)
+
+# Fetch and populate images from Cloudinary
+def fetch_and_populate_images():
+    try:
+        cloudinary_api_url = "https://api.cloudinary.com/v1_1/dswkvnomk/resources/image"
+        api_key = "651324994684599"
+        api_secret = "JgsKsiuw49IdP5uN-SFAJfG51Ac"
+        auth = (api_key, api_secret)
+
+        response = requests.get(cloudinary_api_url, auth=auth)
+        if response.status_code == 200:
+            data = response.json()
+
+            for resource in data.get("resources", []):
+                image_url = resource.get("secure_url")
+                timestamp = resource.get("created_at")
+
+                # Extract custom metadata if available
+                latitude = resource.get("context", {}).get("custom", {}).get("latitude", None)
+                longitude = resource.get("context", {}).get("custom", {}).get("longitude", None)
+
+
+                if latitude and longitude:
+                    post_office = PostOffice.objects.filter(latitude=latitude, longitude=longitude).first()
+                    if post_office and not Image.objects.filter(image_url=image_url).exists():
+                        Image.objects.create(
+                            post_office=post_office,
+                            image_url=image_url,
+                            latitude=latitude,
+                            longitude=longitude,
+                            timestamp=timestamp
+                        )
+    except Exception as e:
+        print(f"Error fetching images: {e}")
+
+# Process images with Gemini
+def image_format_from_url(image_url):
+    try:
+        response = requests.get(image_url)
+        response.raise_for_status()
+        return [{"mime_type": "image/png", "data": BytesIO(response.content).getvalue()}]
+    except Exception as e:
+        print(f"Error downloading image: {e}")
+        raise RuntimeError(f"Failed to process image from URL: {image_url}")
+
+def gemini_output(image_url, system_prompt, user_prompt):
+    image_info = image_format_from_url(image_url)
+    input_prompt = [system_prompt, image_info[0], user_prompt]
+    try:
+        response = model.generate_content(input_prompt)
+        return getattr(response, 'text', "No response text found.")
+    except Exception as e:
+        return f"Error occurred: {str(e)}"
+
+def process_images_with_gemini():
+    system_prompt = """
+    You are an AI specialist in cleanliness and waste classification. 
+    Your task is to analyze input images taken from CCTV footage of post offices. 
+    Ignore the presence of people in the images and focus only on assessing cleanliness.
+
+    If the scene is dirty, provide:
+    1. A cleanliness score between 1 (dirtiest) and 10 (cleanest).
+    2. Waste classifications such as Organic, Non-Organic, Paper, Plastic, and Cardboard.
+    """
+    user_prompt = user_prompt = """
+    Analyze this image and determine:
+    1. Whether the scene is clean or dirty.
+    2. If dirty, provide a cleanliness score (1-10) and classify the waste detected in the image into categories.
+    3.give the output as in the form of dictionary format in key value format only keyword which contain status of image it is clean or dirty,cleanliness score based on image ,waste clasiffication if clean give no garbage if dirty give based on image example plastic,cardboard, organic, inorganic, give the overall percetage of garbage area contain in image 
+    """
+    
+    unprocessed_images = Image.objects.filter(cleanliness_score__isnull=True)
+    for image in unprocessed_images:
+        try:
+            output_text = gemini_output(image.image_url, system_prompt, user_prompt)
+            
+            # Example parsing logic
+            if "clean" in output_text.lower():
+                cleanliness_score = 10
+                is_clean = True
+                cleanliness_status = "Clean"
+                waste_type = None
+            else:
+                cleanliness_score = int(output_text.split("cleanliness score between")[1].split("and")[0].strip()) or 1
+                is_clean = False
+                cleanliness_status = "Dirty"
+                waste_type = "Example Waste"
+
+            # Update the image record
+            image.cleanliness_score = cleanliness_score
+            image.is_clean = is_clean
+            image.cleanliness_status = cleanliness_status
+            image.waste_type = waste_type
+            image.timestamp = now()
+            image.save()
+        except Exception as e:
+            print(f"Error processing image {image.id}: {e}")
+
+# Combined Function
 def post_office_monitored(request):
-    return render(request, "gpai_app/post_office_monitored.html")
+    # Check if the user is logged in and has the correct role
+    if not request.session.get('username') or request.session.get('role') != 'divisional_office_user':
+        return redirect('login')
+    
+    # Fetch the divisional office name from session
+    divisional_office_name = request.session.get('username')
+    
+    # Get the search query from GET parameters
+    search_query = request.GET.get('search', '')
+    
+    # Filter the post offices based on the divisional office name
+    post_offices = PostOffice.objects.filter(division=divisional_office_name)
+    
+    # If a search query is provided, filter post offices by name
+    if search_query:
+        post_offices = post_offices.filter(name__icontains=search_query)
+    
+    # Fetch and process the images (assuming these functions are defined elsewhere)
+    fetch_and_populate_images()
+    process_images_with_gemini()
+    
+    # Get the user data from the session to pass to the template
+    user_data = {
+        'user_id': request.session.get('user_id'),
+        'username': request.session.get('username'),
+        'role': request.session.get('role'),
+    }
+    
+    # Fetch the divisional office details
+    divisional_office = DivisionalOffice.objects.get(username=divisional_office_name)
+    
+    # Prepare context data for rendering
+    context = {
+        'user_data': user_data,
+        'post_offices': post_offices,
+        'divisional_office_name': divisional_office.name,  # Pass divisional office name to the template
+    }
+    
+    # Return the rendered template with context
+    return render(request, 'gpai_app/post_office_monitored.html', context)
+
+
+
 
 
 
