@@ -195,7 +195,7 @@
     <div class="container">
         <h2>Post Office Monitoring under {{ divisional_office_name }}</h2>
         <!-- Search Bar -->
-        <form method="get" class="form-inline my-3">
+        {% comment %} <form method="get" class="form-inline my-3">
             <input 
                 type="text" 
                 name="search" 
@@ -204,7 +204,7 @@
                 class="form-control mr-2"
             >
             <button type="submit" class="btn btn-primary">Search</button>
-        </form>
+        </form> {% endcomment %}
     
         <!-- Results Table -->
         <table class="table table-bordered mt-4">
@@ -212,6 +212,7 @@
                 <tr>
                     <th>Post Office Name</th>
                     <th>Division Name</th>
+                    <th>Image URL</th>
                     <th>Latitude</th>
                     <th>Longitude</th>
                     <th>Timestamp</th>
@@ -219,7 +220,7 @@
                     <!-- New Columns -->
                     <th>Cleanliness Score</th>
                     <th>Waste Type</th>
-                    <th>Is Clean</th>
+                    {% comment %} <th>Is Clean</th> {% endcomment %}
                 </tr>
             </thead>
             <tbody>
@@ -228,6 +229,7 @@
                     <tr>
                         <td>{{ image.post_office.name }}</td>
                         <td>{{ image.post_office.division }}</td>
+                        <td><a href="{{ image.image_url }}">View Image</a></td>
                         <td>{{ image.latitude }}</td>
                         <td>{{ image.longitude }}</td>
                         <td>{{ image.timestamp }}</td>
@@ -241,13 +243,13 @@
                         <!-- New Columns for Cleanliness Score, Waste Type, and Is Clean -->
                         <td>{{ image.cleanliness_score }}</td>
                         <td>{{ image.waste_type }}</td>
-                        <td>
+                        {% comment %} <td>
                             <span 
                                 class="badge 
                                 {% if image.is_clean %}badge-success{% else %}badge-danger{% endif %}">
-                                {% if image.is_clean %}Yes{% else %}No{% endif %}
+                                {% if image.is_clean %}True{% else %}False{% endif %}
                             </span>
-                        </td>
+                        </td> {% endcomment %}
                     </tr>
                     {% endfor %}
                 {% else %}
@@ -259,4 +261,4 @@
         </table>
     </div>    
 </body>
-</html>
+</html> 

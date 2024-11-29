@@ -9,4 +9,5 @@ urlpatterns = [
     path('post_office_monitored', views.post_office_monitored, name="post_office_monitored"),
     path('post_office_dashboard', views.post_office_dashboard, name='post_office_dashboard'),
     path('fetch_postoffice', views.fetch_postoffice, name="fetch_postoffice"),
+    path('image_table', views.image_table, name="image_table")
 ]

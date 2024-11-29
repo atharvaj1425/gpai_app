@@ -67,13 +67,13 @@ class Image(models.Model):
         related_name='images'
     )
     image_url = models.URLField()
-    timestamp = models.DateTimeField(auto_now_add=True)
+    timestamp = models.DateTimeField(null=True, blank=True)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     cleanliness_score = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     is_clean = models.BooleanField(null=True, blank=True)
     cleanliness_status = models.CharField(max_length=50, null=True, blank=True)
-    waste_type = models.CharField(max_length=50, null=True, blank=True)  # e.g., Plastic, Organic
+    waste_type = models.CharField(max_length=500, null=True, blank=True)  # e.g., Plastic, Organic
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

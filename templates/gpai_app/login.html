@@ -60,7 +60,25 @@
         .btn:hover {
             background-color: #0056b3;
         }
+        .forgot-password {
+            text-align: center;
+            margin-top: 15px;
+        }
+        .forgot-password a {
+            color: #007bff;
+            text-decoration: none;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
     </style>
+    <script>
+        function forgotPasswordAlert() {
+            alert("Please contact the administrator for password reset instructions.");
+        }
+    </script>
 </head>
 <body>
     <div class="login-container">
@@ -89,6 +107,9 @@
             </div>
             <button type="submit" class="btn">Login</button>
         </form>
+        <div class="forgot-password">
+            <a href="javascript:void(0);" onclick="forgotPasswordAlert()">Forgot Password?</a>
+        </div>
     </div>
 </body>
 </html>

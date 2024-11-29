@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Table</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+
+        .image-cell img {
+            width: 100px;
+            height: auto;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Image Data Table</h1>
+
+    <!-- Table to display images and their details -->
+    <table>
+        <thead>
+            <tr>
+                <th>Image ID</th>
+                <th>Post Office</th>
+                <th>Image</th>
+                <th>Timestamp</th>
+                <th>Latitude</th>
+                <th>Longitude</th>
+                <th>Cleanliness Score</th>
+                <th>Clean</th>
+                <th>Cleanliness Status</th>
+                <th>Waste Type</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for image in images %}
+                <tr>
+                    <td>{{ image.image_id }}</td>
+                    <td>{{ image.post_office.name }}</td>
+                    <td><a href="{{ image.image_url }}">View Image</a></td>
+                    {% comment %} <td class="image-cell">
+                        <img src="{{ image.image_url }}" alt="Image {{ image.image_id }}">
+                    </td> {% endcomment %}
+                    <td>{{ image.timestamp }}</td>
+                    <td>{{ image.latitude }}</td>
+                    <td>{{ image.longitude }}</td>
+                    <td>{{ image.cleanliness_score }}</td>
+                    <td>{{ image.is_clean }}</td>
+                    <td>{{ image.cleanliness_status }}</td>
+                    <td>{{ image.waste_type }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="10">No image records found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>
