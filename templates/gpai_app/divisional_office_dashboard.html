@@ -162,17 +162,21 @@
                 // Extend the bounds for this marker
                 bounds.extend(position);
         
+                // Dynamic border color based on cleanliness status
+                const borderColor = office.cleanliness_status === "Clean" ? "green" : "red";
+        
+                // Create a styled info window
                 const infoWindow = new google.maps.InfoWindow({
-                    content: `<div>
-                        <strong>${office.name}</strong><br>
-                        Pincode: ${office.pincode}<br>
-                        Branch Type: ${office.branch_type}<br>
-                        Delivery Status: ${office.delivery_status}<br>
-                        Cleanliness Status: ${office.cleanliness_status}
-                    </div>`,
+                    content: `<div style="border: 2px solid ${borderColor}; padding: 10px; border-radius: 5px;">
+                                <strong>${office.name}</strong><br>
+                                Pincode: ${office.pincode}<br>
+                                Branch Type: ${office.branch_type}<br>
+                                Delivery Status: ${office.delivery_status}<br>
+                                <span style="color: ${borderColor}; font-weight: bold;">Cleanliness Status: ${office.cleanliness_status}</span>
+                              </div>`,
                 });
         
-                // Add click listener to open info window
+                // Add click listener to open the info window
                 marker.addListener("click", () => {
                     infoWindow.open(map, marker);
                 });
