@@ -133,9 +133,24 @@ def divisional_office_dashboard(request):
     # Fetch post offices under this division
     post_offices = PostOffice.objects.filter(division=user_data.name)
 
-    # fetch_and_populate_images()
-    # process_images_with_gemini()
-    
+    fetch_and_populate_images()
+    process_images_with_gemini()
+
+    # Fetch latest image for each post office
+    latest_images = Image.objects.filter(post_office__in=post_offices) \
+        .values('post_office') \
+        .annotate(latest_timestamp=Max('timestamp')) \
+        .order_by('-latest_timestamp')
+
+    # Create a dictionary for post office ID to latest cleanliness_status mapping
+    cleanliness_status_mapping = {}
+    for item in latest_images:
+        post_office_id = item['post_office']
+        latest_timestamp = item['latest_timestamp']
+        latest_image = Image.objects.filter(post_office_id=post_office_id, timestamp=latest_timestamp).first()
+        if latest_image:
+            cleanliness_status_mapping[post_office_id] = latest_image.cleanliness_status
+
     # Serialize the post offices data for rendering pins
     post_offices_data = [
         {
@@ -145,6 +160,7 @@ def divisional_office_dashboard(request):
             'pincode': office.pincode,
             'branch_type': office.branch_type,
             'delivery_status': office.delivery_status,
+            'cleanliness_status': cleanliness_status_mapping.get(office.post_office_id, "Unknown")  # Default to "Unknown" if no data
         }
         for office in post_offices if office.latitude and office.longitude
     ]
@@ -371,6 +387,9 @@ def post_office_monitored(request):
     # Fetch post offices under this division
     post_offices = PostOffice.objects.filter(division=user_data.name)
 
+    # fetch_and_populate_images()
+    # process_images_with_gemini()
+
     # Annotate each post office with the latest timestamp of associated images
     latest_images = Image.objects.filter(post_office__in=post_offices) \
         .values('post_office') \
@@ -384,8 +403,7 @@ def post_office_monitored(request):
         if latest_image:
             images.append(latest_image)
 
-    fetch_and_populate_images()
-    process_images_with_gemini()
+    
 
     # Prepare the user data for context
     user_data_context = {

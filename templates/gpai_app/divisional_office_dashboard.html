@@ -134,51 +134,54 @@
         let map;
 
         function initMap() {
-            // Initialize the map with a default center (this will be adjusted dynamically)
             const map = new google.maps.Map(document.getElementById("map"), {
-                center: { lat: 20.5937, lng: 78.9629 }, // Default center: India
-                zoom: 5, // Default zoom level (will adjust dynamically based on bounds)
+                center: { lat: 20.5937, lng: 78.9629 }, // Default center (India)
+                zoom: 5,
             });
         
-            // Create a LatLngBounds object to adjust the map dynamically
             const bounds = new google.maps.LatLngBounds();
-        
-            // Load post offices data from the JSON context variable
             const postOffices = JSON.parse('{{ post_offices_json|safe }}');
         
-            // Add markers for each post office
+            // Marker color URLs
+            const cleanMarkerColor = "http://maps.google.com/mapfiles/ms/icons/green-dot.png"; // Green for clean
+            const dirtyMarkerColor = "http://maps.google.com/mapfiles/ms/icons/red-dot.png"; // Red for dirty
+        
             postOffices.forEach((office) => {
                 const position = { lat: office.latitude, lng: office.longitude };
         
-                // Create a marker
+                // Choose marker color based on cleanliness status
+                const markerColor = office.cleanliness_status === "Clean" ? cleanMarkerColor : dirtyMarkerColor;
+        
                 const marker = new google.maps.Marker({
                     position: position,
                     map: map,
                     title: office.name,
+                    icon: markerColor, // Set marker color
                 });
         
-                // Extend the bounds to include this marker
+                // Extend the bounds for this marker
                 bounds.extend(position);
         
-                // Create an info window
                 const infoWindow = new google.maps.InfoWindow({
                     content: `<div>
                         <strong>${office.name}</strong><br>
                         Pincode: ${office.pincode}<br>
                         Branch Type: ${office.branch_type}<br>
-                        Delivery Status: ${office.delivery_status}
+                        Delivery Status: ${office.delivery_status}<br>
+                        Cleanliness Status: ${office.cleanliness_status}
                     </div>`,
                 });
         
-                // Add a click listener to open the info window
+                // Add click listener to open info window
                 marker.addListener("click", () => {
                     infoWindow.open(map, marker);
                 });
             });
         
-            // Automatically fit the map to the bounds of the markers
+            // Fit the map to include all markers
             map.fitBounds(bounds);
         }
+        
     </script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDOYZvj20isw_zi_d1iuCazAKVoBgssNJY&callback=initMap" async defer></script>
 </body>
