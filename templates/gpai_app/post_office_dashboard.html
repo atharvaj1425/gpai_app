@@ -4,9 +4,151 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Post Office Dashboard</title>
+    <!-- Add Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+    <!-- Include the static files CSS for logo and custom styles if any -->
+    {% load static %}
+
+    <style>
+        /* Navbar Styling */
+        .navbar {
+            background-color: #343a40;  /* Dark background */
+        }
+
+        .navbar .navbar-brand {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .navbar .navbar-nav .nav-link {
+            font-size: 1.1rem;
+            color: #fff !important;
+        }
+
+        .navbar .navbar-nav .nav-link:hover {
+            color: #f8f9fa !important;
+        }
+
+        .navbar-toggler-icon {
+            background-color: #ffffff;
+        }
+
+        /* Logo Styling */
+        .navbar-brand img {
+            margin-right: 10px;
+        }
+
+        /* Alert box for cleanliness status */
+        .alert {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        /* Card styling for post office details */
+        .card {
+            border-radius: 10px;
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .card-text {
+            font-size: 1.1rem;
+        }
+
+        /* Image styling */
+        .img-fluid {
+            border-radius: 10px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to the Post Office Dashboard</h1>
-    <p>User: {{ user_data }}</p>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <!-- Logo -->
+            <a class="navbar-brand" href="#">
+                <img src="{% static 'images/logo.png' %}" alt="Logo" width="40" height="40" class="d-inline-block align-text-top">
+                Post Office Dashboard
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'utility_bills' post_office.post_office_id %}">Drive & Campaigns</a>
+                    </li>
+                    <!-- LiFE Practices Button -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'utility_bills' post_office.post_office_id %}">Utility Bills</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">LiFE Practices</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+
+    <div class="container mt-5">
+        <h2 class="text-center">Post Office Dashboard</h2>
+
+        <!-- Display Alert if the Post Office is Unclean -->
+        {% if is_unclean %}
+            <div class="alert alert-danger" role="alert">
+                This post office is <strong>UNCLEAN</strong> based on the latest cleanliness status.
+            </div>
+        {% endif %}
+
+        <!-- Display Post Office Details -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h4 class="card-title">{{ post_office.name }}</h4>
+                <p class="card-text"><strong>Pincode:</strong> {{ post_office.pincode }}</p>
+                <p class="card-text"><strong>Branch Type:</strong> {{ post_office.branch_type }}</p>
+                <p class="card-text"><strong>Delivery Status:</strong> {{ post_office.delivery_status }}</p>
+                <p class="card-text"><strong>Location:</strong> {{ post_office.latitude }}, {{ post_office.longitude }}</p>
+                <p class="card-text"><strong>Circle:</strong> {{ post_office.circle }}</p>
+                <p class="card-text"><strong>District:</strong> {{ post_office.district }}</p>
+                <p class="card-text"><strong>Division:</strong> {{ post_office.division }}</p>
+                <p class="card-text"><strong>Region:</strong> {{ post_office.region }}</p>
+            </div>
+        </div>
+
+        <!-- Display Latest Image Information -->
+        {% if latest_image %}
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Latest Cleanliness Status</h5>
+                    <img src="{{ latest_image.image_url }}" alt="Post Office Image" class="img-fluid mb-3">
+                    <p><strong>Cleanliness Status:</strong> {{ latest_image.cleanliness_status }}</p>
+                    <p><strong>Cleanliness Score:</strong> {{ latest_image.cleanliness_score }}</p>
+                    <p><strong>Waste Type:</strong> {{ latest_image.waste_type }}</p>
+                    <p><strong>Timestamp:</strong> {{ latest_image.timestamp }}</p>
+                </div>
+            </div>
+        {% else %}
+            <p>No image available for the latest timestamp.</p>
+        {% endif %}
+    </div>
+
 </body>
 </html>

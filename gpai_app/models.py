@@ -15,7 +15,6 @@ class DivisionalOffice(models.Model):
     def __str__(self):
         return self.name
 
-
 class PostOffice(models.Model):
     post_office_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
@@ -58,7 +57,6 @@ class ComplianceScore(models.Model):
     def __str__(self):
         return f"Compliance for {self.post_office.name}: {self.compliance_score}"
 
-
 class Image(models.Model):
     image_id = models.AutoField(primary_key=True)
     post_office = models.ForeignKey(
@@ -80,15 +78,27 @@ class Image(models.Model):
     def __str__(self):
         return f"Image {self.image_id} - {self.post_office.name}"
 
+class UtilityBill(models.Model):
+    bill_id = models.AutoField(primary_key=True)
+    post_office = models.ForeignKey('PostOffice', on_delete=models.CASCADE, related_name='utility_bills')
+    
+    # Billing period
+    month_year = models.CharField(max_length=7, help_text="Format: MM-YYYY")  # Input as MM-YYYY
 
-# class UtilityBill(models.Model):
-#     bill_id = models.AutoField(primary_key=True)
-#     post_office = models.ForeignKey(PostOffice, on_delete=models.CASCADE, related_name='utility_bills')
-#     bill_type = models.CharField(max_length=20, choices=[('water', 'Water'), ('electricity', 'Electricity')])
-#     amount = models.DecimalField(max_digits=10, decimal_places=2)
-#     timestamp = models.DateTimeField(auto_now_add=True)
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
+    # Electricity-related fields
+    electricity_units_consumed = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Electricity Units Consumed")
+    electricity_bill_amount = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True, verbose_name="Electricity Bill Amount")
+    
+    # Water-related fields
+    water_units_consumed = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Water Units Consumed")
+    water_bill_amount = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True, verbose_name="Water Bill Amount")
 
-#     def __str__(self):
-#         return f"{self.bill_type.capitalize()} Bill - {self.post_office.name}"
+    class Meta:
+        unique_together = ('post_office', 'month_year')  # Ensure one record per post office per month-year
+        verbose_name = "Utility Bill"
+        verbose_name_plural = "Utility Bills"
+
+    def __str__(self):
+        return f"Utility Bill - {self.post_office.name} ({self.month_year})"
+
+

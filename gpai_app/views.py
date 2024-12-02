@@ -107,16 +107,34 @@ def user_logout(request):
     return redirect('login') 
 
 def post_office_dashboard(request):
-    # Retrieve user info from the session
-    username = request.session.get('username')
+    # Get the logged-in user's post office based on session (assuming username is stored in session)
+    post_office_username = request.session.get('username')
     role = request.session.get('role')
-
     if role != 'post_office_user':
-        return redirect('')  # Redirect to login if not authorized
+        return redirect('login')  # Redirect to login if no session data exists
 
-    # Use `username` for fetching data or displaying user-specific information
-    user_data = PostOffice.objects.get(username=username)
-    return render(request, 'gpai_app/post_office_dashboard.html', {'user_data': user_data})
+    # Get the post office object
+    post_office = PostOffice.objects.get(username=post_office_username)
+
+    fetch_and_populate_images()
+    process_images_with_gemini()
+
+    # Get the latest image for this post office based on the timestamp
+    latest_image = Image.objects.filter(post_office=post_office) \
+        .annotate(latest_timestamp=Max('timestamp')) \
+        .order_by('-latest_timestamp').first()
+
+    # Check if the cleanliness status is "dirty"
+    is_unclean = latest_image.cleanliness_status.lower() == 'dirty' if latest_image else False
+
+    # Prepare context to pass to template
+    context = {
+        'post_office': post_office,
+        'latest_image': latest_image,  # This will give the latest image or None
+        'is_unclean': is_unclean,  # Pass a flag if the post office is unclean
+    }
+    
+    return render(request, 'gpai_app/post_office_dashboard.html', context)
 
 
 def divisional_office_dashboard(request):
@@ -142,14 +160,17 @@ def divisional_office_dashboard(request):
         .annotate(latest_timestamp=Max('timestamp')) \
         .order_by('-latest_timestamp')
 
-    # Create a dictionary for post office ID to latest cleanliness_status mapping
+    # Create a dictionary for post office ID to latest cleanliness_status and timestamp mapping
     cleanliness_status_mapping = {}
+    timestamp_mapping = {}
+
     for item in latest_images:
         post_office_id = item['post_office']
         latest_timestamp = item['latest_timestamp']
         latest_image = Image.objects.filter(post_office_id=post_office_id, timestamp=latest_timestamp).first()
         if latest_image:
             cleanliness_status_mapping[post_office_id] = latest_image.cleanliness_status
+            timestamp_mapping[post_office_id] = latest_image.timestamp
 
     # Serialize the post offices data for rendering pins
     post_offices_data = [
@@ -160,7 +181,8 @@ def divisional_office_dashboard(request):
             'pincode': office.pincode,
             'branch_type': office.branch_type,
             'delivery_status': office.delivery_status,
-            'cleanliness_status': cleanliness_status_mapping.get(office.post_office_id, "Unknown")  # Default to "Unknown" if no data
+            'cleanliness_status': cleanliness_status_mapping.get(office.post_office_id, "Unknown"),  # Default to "Unknown" if no data
+            'timestamp': timestamp_mapping.get(office.post_office_id, "Unknown")  # Default to "Unknown" if no data
         }
         for office in post_offices if office.latitude and office.longitude
     ]
@@ -171,6 +193,8 @@ def divisional_office_dashboard(request):
         'post_offices_json': json.dumps(post_offices_data, cls=DjangoJSONEncoder),
     }
     return render(request, 'gpai_app/divisional_office_dashboard.html', context)
+
+
 
 # Configure Logging
 logger = logging.getLogger(__name__)
@@ -387,8 +411,8 @@ def post_office_monitored(request):
     # Fetch post offices under this division
     post_offices = PostOffice.objects.filter(division=user_data.name)
 
-    # fetch_and_populate_images()
-    # process_images_with_gemini()
+    fetch_and_populate_images()
+    process_images_with_gemini()
 
     # Annotate each post office with the latest timestamp of associated images
     latest_images = Image.objects.filter(post_office__in=post_offices) \
@@ -421,6 +445,253 @@ def post_office_monitored(request):
     }
 
     return render(request, 'gpai_app/post_office_monitored.html', context)
+
+from django.shortcuts import render, get_object_or_404
+from .models import PostOffice, Image
+from datetime import datetime
+
+def view_post_office_history(request, post_office_id):
+    # Get the selected post office
+    post_office = get_object_or_404(PostOffice, post_office_id=post_office_id)
+
+    # Get all images related to that post office
+    images = Image.objects.filter(post_office=post_office)
+
+    # If a date is selected, filter images by timestamp
+    if request.method == "POST":
+        selected_date = request.POST.get('selected_date')
+        if selected_date:
+            # Convert to a datetime object to filter based on date
+            selected_date = datetime.strptime(selected_date, '%Y-%m-%d')
+            images = images.filter(timestamp__date=selected_date)
+
+    return render(request, 'gpai_app/view_post_office_history.html', {
+        'post_office': post_office,
+        'images': images,
+        'divisional_office_name': post_office.division
+    })
+
+from django.shortcuts import render, get_object_or_404
+from .models import PostOffice
+
+import os
+import json
+import re
+from pathlib import Path
+from django.shortcuts import render, get_object_or_404
+from django.contrib import messages
+from .models import UtilityBill, PostOffice
+import google.generativeai as genai
+
+# Configure the API key
+genai.configure(api_key="AIzaSyABso2hO7CjatfKPB6WoaP48QGeKZ8YsEw")
+
+
+# Utility function to format images for Gemini
+def gemini_extract(image_paths, system_prompt, user_prompt):
+    """
+    Utility function to process images using Google Gemini API.
+    """
+    try:
+        model = genai.GenerativeModel(
+            model_name="gemini-1.5-flash",
+            generation_config={"temperature": 0.2, "top_p": 1, "top_k": 32, "max_output_tokens": 4096}
+        )
+        images = [{"mime_type": "image/png", "data": Path(path).read_bytes()} for path in image_paths]
+        input_prompt = [system_prompt, *images, user_prompt]
+
+        response = model.generate_content(input_prompt)
+        return getattr(response, 'text', "No response text found.")
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+
+import re
+import logging
+import json
+
+# Configure logger for debugging
+logger = logging.getLogger(__name__)
+
+def parse_gemini_output_utility(output_text):
+    """
+    Parse output from the Gemini model using regex for robustness.
+    Extracts the JSON response with keys like 'month-year', 'electricity_units_consumed', etc.
+    """
+    try:
+        # Log the raw output for debugging
+        logger.debug(f"Raw Gemini output: {output_text}")
+
+        # Use regex to extract JSON-like structure
+        json_match = re.search(r'\{.*?\}', output_text, re.DOTALL)
+        if not json_match:
+            raise ValueError("No JSON-like structure found in the output text.")
+
+        # Extract JSON string
+        json_str = json_match.group(0)
+        logger.debug(f"Extracted JSON string: {json_str}")
+
+        # Parse JSON string into a Python dictionary
+        data = json.loads(json_str)
+
+        # Log parsed data for debugging
+        logger.debug(f"Parsed JSON data: {data}")
+
+        # Validate required keys and return structured data
+        required_keys = ['month-year', 'electricity_units_consumed', 'electricity_bill_amount', 
+                         'water_units_consumed', 'water_bill_amount']
+        for key in required_keys:
+            if key not in data:
+                raise ValueError(f"Missing key in extracted JSON: {key}")
+
+        return {
+            "month_year": data.get("month-year"),
+            "electricity_units_consumed": data.get("electricity_units_consumed"),
+            "electricity_bill_amount": data.get("electricity_bill_amount"),
+            "water_units_consumed": data.get("water_units_consumed"),
+            "water_bill_amount": data.get("water_bill_amount"),
+        }
+
+    except json.JSONDecodeError as json_err:
+        logger.error(f"JSON decoding error: {json_err}")
+        return {"error": "Invalid JSON format."}
+    except Exception as e:
+        logger.error(f"Error parsing Gemini output: {e}")
+        return {"error": f"Unexpected error: {e}"}
+
+
+
+def utility_bills(request, post_office_id):
+    """
+    Displays LiFE practices for a specific post office and handles utility bill uploads.
+    """
+    post_office = get_object_or_404(PostOffice, post_office_id=post_office_id)
+
+    if request.method == 'POST' and 'upload_bills' in request.POST:
+        electricity_bill = request.FILES.get('electricity_bill')
+        water_bill = request.FILES.get('water_bill')
+
+        if not electricity_bill or not water_bill:
+            messages.error(request, "Please provide both the electricity and water bills.")
+            return render(request, 'gpai_app/utility_bills.html', {'post_office': post_office})
+
+        # Save files temporarily
+        temp_electricity_path = f'temp_electricity_{electricity_bill.name}'
+        temp_water_path = f'temp_water_{water_bill.name}'
+
+        try:
+            with open(temp_electricity_path, 'wb') as f:
+                f.write(electricity_bill.read())
+
+            with open(temp_water_path, 'wb') as f:
+                f.write(water_bill.read())
+
+            # Call Gemini to process
+            system_prompt = """
+                You are a highly accurate and specialized system designed to extract and analyze data from Electricity Bills and Water Bills. 
+                Your task is to process input images of these bills, classify them correctly, and extract only the required data accurately. 
+                Ensure precise classification of the bills and validation of the extracted data for correctness. 
+                Handle any ambiguities in the input logically and resolve discrepancies to produce error-free output.
+               """
+            user_prompt = """
+               You are provided with two input images: one of an Electricity Bill and one of a Water Bill. 
+                Your task is to:
+                1. Classify each bill accurately as either an Electricity Bill or a Water Bill, even if the user mistakenly uploads them in the wrong fields.
+                2. Extract only the **current month-year** in the format `MM-YYYY` from each bill.
+                3. For the Electricity Bill:
+                - Extract the **total electricity units consumed** for the current month and the latest year for example there will be units consumed for Nov 23 and Nov 24 so you will extract the units for the latest i.e. Nov 24.
+                - Extract the **bill amount to be paid before the deadline** for the current month. This should **exclude previous charges, penalties, or dues**.
+                4. For the Water Bill:
+                - Extract the **current water units consumed** for the month.
+                - Extract the **current bill amount** for the month. This must exclude any additional charges or dues.
+
+                **Output Requirements:**
+                - Ensure both bills belong to the **same month-year**. If they do not, identify the discrepancy and indicate it in the output.
+                - If the user mistakenly provides two bills of the same type, handle the situation logically and provide a correction note in the output.
+                - Return the output as a single JSON object with the following keys:
+                - `"month-year"`: Month-Year in `MM-YYYY` format (common for both bills).
+                - `"electricity_units_consumed"`: Total units of electricity consumed (integer or float).
+                - `"electricity_bill_amount"`: Bill amount to pay before the deadline (float).
+                - `"water_units_consumed"`: Total water consumption (integer or float).
+                - `"water_bill_amount"`: Current water bill amount (float).
+
+                **Example Output:**
+                ```json
+                {
+                    "month-year": "09-2024",
+                    "electricity_units_consumed": 150,
+                    "electricity_bill_amount": 1200.50,
+                    "water_units_consumed": 30,
+                    "water_bill_amount": 500.75
+                }
+               """
+            # system_prompt = """
+            #    You are a specialist in comprehending Electricity Bills.
+            #    Input images in the form of Electricity Bills will be provided to you,
+            #    and your task is to parse the text present in the image and then respond to questions based on the content of the input image.
+            #    """
+            #user_prompt = "What is the total unit consumed and the total amount to pay according to this image of the electricity bill and month/year of this electricity bill give the output in the jason format658?"
+            gemini_output = gemini_extract([temp_electricity_path, temp_water_path], system_prompt, user_prompt)
+
+            # Parse Gemini output
+            parsed_data = parse_gemini_output_utility(gemini_output)
+            if "error" in parsed_data:
+                messages.error(request, parsed_data["error"])
+                return render(request, 'gpai_app/utility_bills.html', {'post_office': post_office})
+
+            # Pass parsed data to the next step for user confirmation
+            return render(request, 'gpai_app/utility_bills.html', {
+                'post_office': post_office,
+                'extracted_json': json.dumps(parsed_data),
+            })
+
+        except Exception as e:
+            messages.error(request, f"An error occurred while processing the bills: {e}")
+            return render(request, 'gpai_app/utility_bills.html', {'post_office': post_office})
+
+        finally:
+            # Clean up temporary files
+            os.remove(temp_electricity_path)
+            os.remove(temp_water_path)
+
+    if request.method == 'POST' and 'confirm_bills' in request.POST:
+        extracted_json = request.POST.get('extracted_json')
+
+        try:
+            # Parse extracted JSON from user confirmation
+            data = json.loads(extracted_json)
+
+            # Check for duplicates
+            if UtilityBill.objects.filter(post_office_id=post_office_id, month_year=data['month_year']).exists():
+                messages.error(request, "Record already exists for this post office and month.")
+                return render(request, 'gpai_app/utility_bills.html', {'post_office': post_office})
+
+            # Save data to DB
+            UtilityBill.objects.create(
+                post_office_id=post_office_id,
+                month_year=data['month_year'],
+                electricity_units_consumed=data.get('electricity_units_consumed'),
+                electricity_bill_amount=data.get('electricity_bill_amount'),
+                water_units_consumed=data.get('water_units_consumed'),
+                water_bill_amount=data.get('water_bill_amount'),
+            )
+            messages.success(request, "Utility Bill saved successfully.")
+            return render(request, 'gpai_app/utility_bills.html', {'post_office': post_office})
+
+        except json.JSONDecodeError:
+            messages.error(request, "Invalid JSON format.")
+            return render(request, 'gpai_app/utility_bills.html', {'post_office': post_office})
+        except Exception as e:
+            messages.error(request, f"An error occurred: {e}")
+            return render(request, 'gpai_app/utility_bills.html', {'post_office': post_office})
+
+    return render(request, 'gpai_app/utility_bills.html', {'post_office': post_office})
+
+
+
+
+
+
 
 def image_table(request):
     images = Image.objects.all()

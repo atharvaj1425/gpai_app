@@ -1,0 +1,54 @@
+ /* Custom styling for the page */
+ @import url('https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css');
+
+ body {
+     font-family: Arial, sans-serif;
+     background-color: #f8f9fa;
+ }
+
+ .navbar {
+     background-color: #7b7b7b !important;
+     max-height: 65px
+ }
+
+ .navbar-brand {
+     display: flex;
+     align-items: center;
+     color: white;
+ }
+
+ .navbar-brand img {
+     height: 65px;
+     margin-right: 15px;
+ }
+
+ .navbar .nav-link {
+     color: white !important;
+     transition: all 0.3s ease;
+ }
+
+ .navbar .nav-link:hover {
+     background-color: #575757;
+     border-radius: 5px;
+ }
+
+ #map {
+     height: 500px;
+     width: 100%;
+     margin-bottom: 20px;
+ }
+
+ .post-office-list {
+     margin: 20px 0;
+ }
+
+ .post-office-list h2 {
+     margin-bottom: 20px;
+     font-size: 24px;
+     color: #333;
+ }
+
+ .post-office-list .card {
+     margin-bottom: 10px;
+     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+ }
