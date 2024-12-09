@@ -168,6 +168,7 @@
                         <th>Cleanliness Score</th>
                         <th>Waste Type</th>
                         <th>View History</th>
+                        <th>Campaigns</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -191,6 +192,9 @@
                             <td>{{ image.waste_type }}</td>
                             <td>
                                 <a href="{% url 'view_post_office_history' image.post_office_id %}" class="btn btn-info">View History</a>
+                            </td> 
+                            <td>
+                                <a href="{% url 'view_campaign_history' image.post_office_id %}" class="btn btn-info">View Campaigns</a>
                             </td> 
                         </tr>
                         {% endfor %}

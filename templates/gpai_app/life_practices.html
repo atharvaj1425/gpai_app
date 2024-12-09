@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recycling Requests</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+    <style>
+        /* Navbar Styling */
+        .navbar {
+            background-color: #343a40;  /* Dark background */
+        }
+
+        .navbar .navbar-brand {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .navbar .navbar-nav .nav-link {
+            font-size: 1.1rem;
+            color: #fff !important;
+        }
+
+        .navbar .navbar-nav .nav-link:hover {
+            color: #f8f9fa !important;
+        }
+
+        .navbar-toggler-icon {
+            background-color: #ffffff;
+        }
+
+        /* Logo Styling */
+        .navbar-brand img {
+            margin-right: 10px;
+        }
+
+        /* Table Styling */
+        .table {
+            background-color: #ffffff;
+            border-collapse: collapse;
+        }
+
+        .table th {
+            background-color: #343a40;
+            color: #ffffff;
+        }
+
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: #f8f9fa;
+        }
+
+        .table tbody tr:hover {
+            background-color: #e9ecef;
+        }
+
+        .table thead th {
+            text-align: center;
+        }
+
+        .table tbody td {
+            text-align: center;
+        }
+
+        .alert {
+            background-color: #f8d7da;
+            color: #842029;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <img src="{% static 'images/logo.png' %}" alt="Logo" width="40" height="40" class="d-inline-block align-text-top">
+                Post Office Dashboard
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'drive_campaigns' post_office.post_office_id %}">Drive & Campaigns</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'utility_bills' post_office.post_office_id %}">Utility Bills</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">LiFE Practices</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-5">
+        <h1 class="text-center">Recycling Requests for {{ post_office.name }}</h1>
+        
+        {% if recyclerequests %}
+            <table class="table table-bordered table-striped mt-4">
+                <thead>
+                    <tr>
+                        <th>Recycle ID</th>
+                        <th>Recycler Name</th>
+                        <th>Phone Number</th>
+                        <th>Recycle Item</th>
+                        <th>Number of Items</th>
+                        <th>Quantity to Recycle (kg)</th>
+                        <th>Pincode</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for request in recyclerequests %}
+                        <tr>
+                            <td>{{ request.recycle_id }}</td>
+                            <td>{{ request.name_of_recycler }}</td>
+                            <td>{{ request.phone_no }}</td>
+                            <td>{{ request.recycle_item }}</td>
+                            <td>{{ request.num_of_items }}</td>
+                            <td>{{ request.quantity_to_recycle }}</td>
+                            <td>{{ request.pincode }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="alert text-center mt-4" role="alert">
+                No recycling requests available for this post office.
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

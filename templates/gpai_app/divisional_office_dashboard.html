@@ -75,6 +75,93 @@
             border-radius: 5px;
             background: #f9f9f9;
         }
+            @import url('https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css');
+        
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f8f9fa;
+            }
+        
+            .navbar {
+                background-color: #7b7b7b !important;
+                max-height: 65px;
+            }
+        
+            .navbar-brand {
+                display: flex;
+                align-items: center;
+                color: white;
+            }
+        
+            .navbar-brand img {
+                height: 65px;
+                margin-right: 15px;
+            }
+        
+            .navbar .nav-link {
+                color: white !important;
+                transition: all 0.3s ease;
+            }
+        
+            .navbar .nav-link:hover {
+                background-color: #575757;
+                border-radius: 5px;
+            }
+        
+            .nav-item {
+                margin-left: 25px;
+            }
+        
+            #map {
+                height: 500px;
+                width: 100%;
+                margin-bottom: 20px;
+            }
+        
+            .charts-container {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 20px;
+                justify-content: space-between;
+                margin-top: 20px;
+            }
+        
+            .chart {
+                flex: 1 1 48%;
+                padding: 15px;
+                background-color: #fff;
+                border-radius: 8px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+                max-width: 48%;
+            }
+        
+            .chart h3 {
+                text-align: center;
+                margin-bottom: 15px;
+                font-size: 1.5rem;
+                color: #343a40;
+            }
+        
+            canvas {
+                background: #fff;
+                border-radius: 10px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                padding: 10px;
+            }
+        
+            /* Responsive Design */
+            @media (max-width: 768px) {
+                .charts-container {
+                    flex-direction: column;
+                    align-items: center;
+                }
+        
+                .chart {
+                    width: 100%;
+                }
+            }
+        
     </style>
 </head>
 <body>
@@ -111,7 +198,157 @@
 
     <!-- Map Container -->
     <div id="map"></div>
+    <!-- Charts Container -->
+    <div class="charts-container">
+        <div class="chart">
+            <h3>Top 5 Clean Post Offices</h3>
+            <canvas id="cleanPostOfficesChart"></canvas>
+        </div>
+        <div class="chart">
+            <h3>Top 5 Unclean Post Offices</h3>
+            <canvas id="uncleanPostOfficesChart"></canvas>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <div>
+        <h3>Top 5 Post Offices by Waste Type</h3>
+        <div class="charts-container">
+            {% for waste_type, data in chart_data.items %}
+                <div class="chart-container">
+                    <canvas id="{{ waste_type }}-chart"></canvas>
+                    <script>
+                        const ctx_{{ waste_type }} = document.getElementById('{{ waste_type }}-chart').getContext('2d');
+                        new Chart(ctx_{{ waste_type }}, {
+                            type: 'bar',
+                            data: {
+                                labels: {{ data.labels|safe }},
+                                datasets: [{
+                                    label: '{{ waste_type|title }} Waste',
+                                    data: {{ data.data|safe }},
+                                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                    borderColor: 'rgba(75, 192, 192, 1)',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                scales: {
+                                    y: {
+                                        beginAtZero: true
+                                    }
+                                }
+                            }
+                        });
+                    </script>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    
 
+
+    <!-- Post Offices JSON Data -->
+    <script>
+        const postOffices = JSON.parse('{{ post_offices_json|escapejs }}');
+    </script>
+
+    <!-- Map Initialization Script -->
+    <script>
+        function initMap() {
+            const map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: 20.5937, lng: 78.9629 },
+                zoom: 5,
+            });
+
+            const bounds = new google.maps.LatLngBounds();
+            const cleanMarkerColor = "http://maps.google.com/mapfiles/ms/icons/green-dot.png";
+            const dirtyMarkerColor = "http://maps.google.com/mapfiles/ms/icons/red-dot.png";
+
+            postOffices.forEach((office) => {
+                const position = { lat: office.latitude, lng: office.longitude };
+                const markerColor = office.cleanliness_status === "Clean" ? cleanMarkerColor : dirtyMarkerColor;
+
+                const marker = new google.maps.Marker({
+                    position: position,
+                    map: map,
+                    icon: markerColor,
+                });
+
+                bounds.extend(position);
+            });
+
+            map.fitBounds(bounds);
+        }
+    </script>
+
+    <!-- Chart.js Script -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Sort post offices by cleanliness score
+        const sortedByCleanliness = [...postOffices].sort((a, b) => b.cleanliness_score - a.cleanliness_score);
+
+        // Get the top 5 clean post offices
+        const cleanPostOffices = sortedByCleanliness.slice(0, Math.min(sortedByCleanliness.length, 5));
+
+        // Get the top 5 unclean post offices (least scores)
+        const uncleanPostOffices = sortedByCleanliness.slice(-Math.min(sortedByCleanliness.length, 5)).reverse();
+
+        // Function to create data for Chart.js
+        function createChartData(offices) {
+            return {
+                labels: offices.map(office => office.name),
+                datasets: [{
+                    label: 'Cleanliness Score',
+                    data: offices.map(office => office.cleanliness_score),
+                    backgroundColor: offices.map(office =>
+                        office.cleanliness_status === 'Clean' ? 'rgba(75, 192, 192, 0.2)' : 'rgba(255, 99, 132, 0.2)'
+                    ),
+                    borderColor: offices.map(office =>
+                        office.cleanliness_status === 'Clean' ? 'rgba(75, 192, 192, 1)' : 'rgba(255, 99, 132, 1)'
+                    ),
+                    borderWidth: 1
+                }]
+            };
+        }
+
+        // Create charts
+        const cleanPostOfficesChartCtx = document.getElementById('cleanPostOfficesChart').getContext('2d');
+        new Chart(cleanPostOfficesChartCtx, {
+            type: 'bar',
+            data: createChartData(cleanPostOffices),
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        const uncleanPostOfficesChartCtx = document.getElementById('uncleanPostOfficesChart').getContext('2d');
+        new Chart(uncleanPostOfficesChartCtx, {
+            type: 'bar',
+            data: createChartData(uncleanPostOffices),
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
     <!-- Display the list of post offices -->
     <div class="post-office-list" id="post-offices">
         <h2>Post Offices in this Division:</h2>
@@ -186,7 +423,8 @@
                             Pincode: ${office.pincode}<br>
                             Branch Type: ${office.branch_type}<br>
                             Timestamp: ${office.timestamp}<br>
-                            <span style="color: ${borderColor}; font-weight: bold;">Cleanliness Status: ${office.cleanliness_status}</span>
+                            <span style="color: ${borderColor}; font-weight: bold;">Cleanliness Status: ${office.cleanliness_status}</span><br>
+                            Cleanliness Score: ${office.cleanliness_score}
                         </div>
                     `;
                     infoWindowDiv.style.display = "block";
@@ -203,6 +441,7 @@
         
         
     </script>
+    
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDOYZvj20isw_zi_d1iuCazAKVoBgssNJY&callback=initMap" async defer></script>
 </body>
 </html>

@@ -1,0 +1,816 @@
+{%load static%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Home Page</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+    <style>
+        {%load static%}
+        /* General Styling */
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+        /* Header Section */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background-color:#7B2104;
+            color: #ffffff;
+            max-height: 70px;
+        }
+        .header .project-name {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        .header .logo {
+            height: 60px;
+        }
+
+        .header .login-btn {
+            background-color: #00796b;;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .header .login-btn:hover {
+            background-color: #0056b3;
+            color: #ffffff;
+        }
+
+        /* Marquee Section */
+        .marquee {
+            background-color: #f8f9fa;
+            padding: 10px;
+            color: #343a40;
+            font-size: 1.2rem;
+        }
+
+        /* About Us Section */
+        .about {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 40px 20px;
+            background-color: #e9ecef;
+            max-height:320px;
+        }
+
+        .about .text {
+            max-width: 60%;
+        }
+
+        .about .text h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .about .text p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+
+        .about img {
+            max-width: 19%;
+            border-radius: 10px;
+            margin-left:-50px;
+        }
+
+        /* Carousel Section */
+        .carousel-container {
+            padding: 40px 20px;
+            background-color: #f8f9fa;
+            
+        }
+
+        .carousel img {
+            width: 100%;
+            border-radius: 10px;
+        }
+        .row {
+            margin-right: -15px;
+            margin-left: -5px;
+        }
+        .filter-form {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        form {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            flex-direction:column;
+        }
+
+        label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        select {
+            padding: 8px 12px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            background-color: #ffffff;
+            margin-bottom: 15px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        li strong {
+            font-size: 18px;
+            color: #333;
+        }
+
+        li p {
+            margin: 8px 0;
+        }
+
+        li small {
+            color: #555;
+        }
+        .hidden {
+            display: none;
+        
+        }
+        .dynamic-card {
+            background: linear-gradient(135deg, #7dd3fc, #4ade80); /* Gradient background */
+            
+            box-shadow: rgba(0, 0, 0, 0.1) 0px 7px 15px 0px;
+            border-radius: 15px; /* Smooth rounded corners */
+            overflow: automatically;
+            transition: all 0.3s ease-in-out; /* Smooth transition effect */
+            padding: 20px;
+            position: relative;
+          }
+          
+          .dynamic-card:hover {
+            box-shadow: rgba(0, 0, 0, 0.2) 0px 15px 30px 0px; /* Enhanced shadow on hover */
+            transform: scale(1.05); /* Slight zoom on hover */
+          }
+          
+          .dynamic-card .card-body {
+            position: relative;
+            z-index: 2;
+          }
+          
+          .dynamic-card::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.15), transparent);
+            opacity: 0;
+            transition: opacity 0.4s ease-in-out;
+          }
+          
+          .dynamic-card:hover::before {
+            opacity: 1; /* Add radial gradient effect on hover */
+          }
+          
+          .dynamic-card h4.card-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            letter-spacing: 1.5px;
+          }
+          
+          .dynamic-card p.card-text {
+            font-size: 1rem;
+            font-weight: 300;
+            margin-bottom: 0;
+          }
+          
+          .dynamic-card:hover h4.card-title,
+          .dynamic-card:hover p.card-text {
+            color: #e0f2fe; /* Change text color on hover */
+          }
+            dynamic-modal {
+            background: linear-gradient(135deg, #4ade80, #7dd3fc); /* Gradient background for the modal */
+            border-radius: 15px; /* Rounded corners */
+            box-shadow: rgba(0, 0, 0, 0.2) 0px 10px 30px;
+            overflow: automatically;
+            padding: 20px;
+            transition: all 0.3s ease-in-out;
+            }
+
+            .dynamic-modal .modal-content {
+            border-radius: 15px;
+            overflow-y:upper; /* Enable vertical scrolling for long content */
+            max-height: 120vh; /* Restrict modal height to 80% of the viewport */
+            background: #34d399;
+            }
+
+            .dynamic-modal .modal-header {
+            background: #34d399; /* Accent color for the header */
+            color: #ffffff;
+            border-bottom: none;
+            padding: 15px;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+            }
+
+            .dynamic-modal .modal-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            }
+
+            .dynamic-modal .btn-close {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            padding: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            }
+
+            .dynamic-modal .btn-close:hover {
+            background: #ffffff;
+            }
+
+            .dynamic-modal .modal-body {
+            padding: 20px;
+            font-size: 1rem;
+            color: #333333;
+            }
+
+            .dynamic-modal .form-label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+            color: #4ade80;
+            }
+
+            .dynamic-modal .form-control,
+            .dynamic-modal .form-select {
+            border: 1px solid #34d399;
+            border-radius: 5px;
+            padding: 10px;
+            transition: border-color 0.3s;
+            }
+
+            .dynamic-modal .form-control:focus,
+            .dynamic-modal .form-select:focus {
+            border-color: #4ade80;
+            outline: none;
+            box-shadow: 0 0 5px rgba(52, 211, 153, 0.5);
+            }
+
+            .dynamic-modal .btn-primary {
+            background: #34d399;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: background 0.3s;
+            }
+
+            .dynamic-modal .btn-primary:hover {
+            background: #2bbf89;
+            }
+
+            .dynamic-modal .modal-footer {
+            background: #f9fafb;
+            border-top: none;
+            padding: 10px;
+            border-bottom-left-radius: 15px;
+            border-bottom-right-radius: 15px;
+            }
+
+            @media (max-width: 768px) {
+            .dynamic-modal .modal-content {
+                max-height: 100vh; /* Adjust height for smaller screens */
+            }
+            }
+              #form-popup .modal-content {
+                background: linear-gradient(135deg, #1e3a8a, #9333ea); /* Gradient background for a unique look */
+                 /* White text for readability */
+                border-radius: 15px; /* Smooth rounded corners */
+                box-shadow: rgba(0, 0, 0, 0.15) 0px 10px 25px 0px;
+                overflow: hidden;
+                transition: all 0.3s ease-in-out;
+              }
+              
+              #form-popup .modal-header {
+                background: rgba(255, 255, 255, 0.1); /* Transparent overlay for contrast */
+                border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+                padding: 15px 20px;
+              }
+              
+              #form-popup .modal-header h5 {
+                font-size: 1.5rem;
+                font-weight: bold;
+                text-transform: uppercase;
+                color: #ffffff;
+                letter-spacing: 1px;
+                margin: 0;
+              }
+              
+              #form-popup .modal-header .btn-close {
+                background-color: rgba(255, 255, 255, 0.3);
+                border-radius: 50%;
+                padding: 5px;
+                transition: background-color 0.3s ease;
+              }
+              
+              #form-popup .modal-header .btn-close:hover {
+                background-color: rgba(255, 255, 255, 0.5);
+              }
+              
+              #form-popup .modal-body {
+                padding: 20px;
+                font-size: 1rem;
+               
+              }
+              
+              #form-popup form .form-label {
+                font-weight: bold;
+                color: #f3e8ff; /* Muted white for labels */
+              }
+              
+              #form-popup form .form-control,
+              #form-popup form .form-select {
+                background-color: rgba(255, 255, 255, 0.2);
+                border: 1px solid rgba(255, 255, 255, 0.4);
+                
+                border-radius: 8px;
+                padding: 10px;
+                transition: border-color 0.3s ease, background-color 0.3s ease;
+              }
+              
+              #form-popup form .form-control:focus,
+              #form-popup form .form-select:focus {
+                border-color: #ffffff;
+                background-color: rgba(255, 255, 255, 0.3);
+                box-shadow: none;
+                outline: none;
+              }
+              
+              #form-popup form .btn-primary {
+                background: linear-gradient(135deg, #22c55e, #16a34a); /* Vibrant gradient for submit button */
+                border: none;
+                color: #ffffff;
+                font-weight: bold;
+                font-size: 1.2rem;
+                border-radius: 8px;
+                padding: 10px 20px;
+                transition: background 0.3s ease, transform 0.2s ease;
+              }
+              
+              #form-popup form .btn-primary:hover {
+                background: linear-gradient(135deg, #15803d, #166534); /* Slightly darker gradient on hover */
+                transform: translateY(-2px);
+              }
+              
+              #form-popup .modal-body input,
+              #form-popup .modal-body select {
+                margin-bottom: 15px;
+              }
+              #form-popup .model-body option{
+                background: linear-gradient(135deg, #15803d, #166534);
+              }
+              
+              #form-popup #results-section {
+                margin-top: 20px;
+                color: #f3e8ff;
+              }
+              
+              #form-popup #results-section h6 {
+                font-weight: bold;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                color: #ffffff;
+              }
+              
+              #form-popup #results-section .card {
+                background: rgba(255, 255, 255, 0.1);
+                border: none;
+                border-radius: 10px;
+                box-shadow: rgba(0, 0, 0, 0.2) 0px 5px 15px;
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+              }
+              
+              #form-popup #results-section .card:hover {
+                transform: scale(1.05);
+                box-shadow: rgba(0, 0, 0, 0.3) 0px 10px 20px;
+              }
+              
+              #form-popup #results-section .card .card-title {
+                
+                font-size: 1.1rem;
+                font-weight: bold;
+              }
+              
+              #form-popup #results-section .card .card-text {
+                color: #e0d4ff;
+                font-size: 0.9rem;
+              }
+              @media (max-width: 768px) {
+                #form-popup .modal-content {
+                    max-height: 100vh; /* Adjust height for smaller screens */
+                }
+                #form-popup .modal-body {
+                    max-height: calc(100vh - 120px); /* Adjust for header/footer */
+                }
+            }
+              
+    </style>
+</head>
+<body>  
+    <div class="row" id="header" style="margin-top: 5px; margin-bottom: 5px; max-height:80px;">
+        <div class="col-md-4">
+<img class="img-responsive hidden-xs" height="80" src="{% static 'images/postnew.png' %}" id="india-post-logo" alt="India Post Logo">
+            </a>
+        </div>
+<div class="col-md-8">
+<img class="img-responsive hidden-xs"height="80" style="padding: 20px 30px 0px 10px; display:inline-block;float:right;"src="{% static 'images/g20new.png' %}" alt="Emblem of India" id="emblem-of-india-logo">
+<img class="img-responsive hidden-xs"height="80" style="padding: 20px 30px 0px 10px; display:inline-block;float:right;" src="{% static 'images/75years.png' %}" alt="Azadi ka amrit mahotsav">
+<img class="img-responsive hidden-xs" height="80"style="padding: 20px 20px 0px 10px; display:inline-block;float:right;" src="{% static 'images/symbol.png' %}" alt="G20">
+<img class="img-responsive hidden-xs" height="80"style="padding: 20px 20px 0px 10px; display:inline-block;float:right;" src="{% static 'images/life.png' %}" alt="G20">
+</div>
+</div>
+    <!-- Header Section -->
+    <div class="header">
+        <div class="project-name"> <img src="{% static 'images/logo.png'%}" alt="Project Logo" class="logo">GreenPost AI</div>
+        
+       <a href="{% url 'login' %}" ><button class="login-btn">Login</button>
+       </a>
+    </div>
+    <!-- Marquee Section -->
+    <div class="marquee">
+        <marquee>Latest Update: Welcome to our project! Stay tuned for more updates!</marquee>
+    </div>
+    <!-- About Us Section -->
+    <div class="about">
+        <div class="text">
+            <h2>About Us</h2>
+           <p> Our project focuses on monitoring and enhancing cleanliness across post offices in India. Using advanced AI technologies, we analyze CCTV images
+             captured at scheduled intervals to determine cleanliness status. The system detects garbage near dustbins, categorizes it into types (e.g., plastic, glass, paper), and displays 
+             the results on an interactive dashboard. Each post office is mapped with geolocation data, enabling real-time status updates via
+               clean and dirty markers with animated icons. Additionally, the project includes features for document management, such as electricity bill processing, to ensure streamlined operations. Our aim is to promote Swachhta (cleanliness) and 
+               LiFE (Lifestyle for Environment) practices while leveraging AI to bring transparency and efficiency to monitoring protocols.        </div>
+        <img src="{% static 'images/about.png' %}" alt="Project Image">
+    </div>
+    <!-- Carousel Section -->
+    <div class="carousel-container">
+        <div id="projectCarousel" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-inner">
+                <div class="carousel-item active">
+                    <img src="{% static 'images/image11.png' %}" height="390" alt="Slide 1">
+                </div>
+                <div class="carousel-item">
+                    <img src="{% static 'images/image22.png' %}" height="390"alt="Slide 2">
+                </div>
+                <div class="carousel-item">
+                    <img src="{% static 'images/image33.png' %}" height="390"alt="Slide 3">
+                </div>
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#projectCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#projectCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+            </button>
+        </div>
+    </div>       
+ <!-- Initial Card -->
+<!-- Initial Card -->
+<div class="container mt-3">
+    <div class="row justify-content-center">
+      <!-- First Card -->
+      <div class="col-md-4 col-lg-3 mb-4">
+        <div id="initial-card" class="card text-center shadow dynamic-card" onclick="openFormPopup()" style="cursor: pointer;">
+          <div class="card-body">
+            <h4 class="card-title">Search for Campaigns</h4>
+            <p class="card-text">Click to search campaigns by venue</p>
+          </div>
+        </div>
+      </div>
+  
+      <div class="col-md-4 col-lg-3 mb-4">
+        <div id="recycle-card" class="card text-center shadow dynamic-card" onclick="openRecyclePopup()" style="cursor: pointer;">
+          <div class="card-body">
+            <h4 class="card-title">Recycle Request</h4>
+            <p class="card-text">Click to submit a recycling request</p>
+          </div>
+        </div>
+      </div>
+      
+    
+      <!-- Modal for Recycling Request Form -->
+      <div id="recycle-popup" class="modal fade shadow dynamic-card" tabindex="5" aria-labelledby="recyclePopupLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="recyclePopupLabel">Submit Recycling Request</h5>
+              <button type="button" class="btn-close" onclick="closeRecyclePopup()" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form method="POST" action="/submit_recycling_request/">
+                {% csrf_token %}
+                <div class="mb-3">
+                  <label for="name_of_recycler" class="form-label">Name of Recycler:</label>
+                  <input type="text" id="name_of_recycler" name="name_of_recycler" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                  <label for="phone_no" class="form-label">Phone No:</label>
+                  <input type="text" id="phone_no" name="phone_no" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                  <label for="recycle_item" class="form-label">What do you want to recycle?</label>
+                  <input type="text" id="recycle_item" name="recycle_item" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                  <label for="pincode" class="form-label">Pincode:</label>
+                  <input type="text" id="pincode" name="pincode" class="form-control" oninput="fetchPostOffices()" required>
+                </div>
+                <div class="mb-3">
+                  <label for="recycle_location" class="form-label">Where do you want to recycle?</label>
+                  <select id="recycle_location" name="recycle_location" class="form-select" required>
+                    <option value="">Select Post Office</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="num_of_items" class="form-label">Number of Items to Recycle:</label>
+                  <input type="number" id="num_of_items" name="num_of_items" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                  <label for="quantity_to_recycle" class="form-label">Quantity to Recycle(in kg):</label>
+                  <input type="text" id="quantity_to_recycle" name="quantity_to_recycle" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Submit</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+      <script>
+        function openRecyclePopup() {
+          const modal = new bootstrap.Modal(document.getElementById('recycle-popup'));
+          modal.show();
+        }
+    
+        function closeRecyclePopup() {
+          const modalElement = document.getElementById('recycle-popup');
+          const modalInstance = bootstrap.Modal.getInstance(modalElement);
+          modalInstance.hide();
+        }
+    
+        async function fetchPostOffices() {
+            const pincode = document.getElementById('pincode').value;
+            const recycleLocationSelect = document.getElementById('recycle_location');
+          
+            // Clear existing options
+            recycleLocationSelect.innerHTML = '<option value="">Select Post Office</option>';
+          
+            console.log("Entered Pincode:", pincode); // Debug: Check pincode value
+          
+            if (pincode.length === 6) {
+              try {
+                const response = await fetch(`/get-post-offices?pincode=${pincode}`);
+                console.log("Fetch Response Status:", response.status); // Debug: Check response status
+          
+                if (response.ok) {
+                  const postOffices = await response.json();
+                  console.log("Post Offices Fetched:", postOffices); // Debug: Check fetched data
+          
+                  postOffices.forEach(postOffice => {
+                    const option = document.createElement('option');
+                    option.value = postOffice.name; // Adjust based on your API response keys
+                    option.textContent = postOffice.name; // Adjust based on your API response keys
+                    recycleLocationSelect.appendChild(option);
+                  });
+                } else {
+                  console.error("Failed to fetch post offices. Status:", response.status);
+                }
+              } catch (error) {
+                console.error('Error fetching post offices:', error);
+              }
+            } else {
+              console.warn("Invalid Pincode:", pincode);
+            }
+          }
+      </script>
+    </body>
+
+  
+      <!-- Third Card -->
+      <div class="col-md-4 col-lg-3 mb-4">
+        <div id="third-card" class="card text-center hadow dynamic-card" onclick="openFormPopup()" style="cursor: pointer;">
+          <div class="card-body">
+            <h4 class="card-title">Search for Locations</h4>
+            <p class="card-text">Click to search locations for campaigns</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+<!-- Popup for Form and Results -->
+ 
+<div id="form-popup" class="modal fade" tabindex="-1" aria-labelledby="formPopupLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="formPopupLabel">Search Campaigns</h5>
+                <button type="button" class="btn-close" onclick="closePopup()" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Form Section -->
+                <form method="get" action="{% url 'home' %}" id="campaignForm">
+                    <div class="mb-3">
+                        <label for="venue" class="form-label">Filter by Venue:</label>
+                        <select name="venue" id="venue" class="form-select">
+                            <option class="option" value="">Select Venue</option>
+                            {% for v in available_venues %}
+                                <option value="{{ v }}" {% if v == request.GET.venue %}selected{% endif %}>{{ v }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-60">Search</button>
+                </form>
+                <!-- Results Section -->
+                <div id="results-section" class="mt-4 hidden">
+                    <h6>Ongoing Campaigns</h6>
+                    <div class="row">
+                        {% for campaign in ongoing_campaigns %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card shadow">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ campaign.campaign_drive_name }}</h6>
+                                    <p class="card-text"><strong>Venue:</strong> {{ campaign.Venue }}</p>
+                                    <p class="card-text"><small>{{ campaign.start_date }} to {{ campaign.end_date }}</small></p>
+                                    <button 
+                                        class="btn btn-primary btn-sm register-btn" 
+                                        data-campaign-id="{{ campaign.campaign_drive_id }}">
+                                        Register
+                                    </button>
+                                </div>
+                            </div>
+                            
+                        </div>
+                        
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- JavaScript -->
+<script>
+    // Open the form popup
+    function openFormPopup() {
+        const popup = new bootstrap.Modal(document.getElementById('form-popup'));
+        popup.show();
+    }
+    // Close the popup
+    function closePopup() {
+        const popup = bootstrap.Modal.getInstance(document.getElementById('form-popup'));
+        popup.hide();
+        document.getElementById('results-section').classList.add('hidden'); // Hide results when popup is closed
+    }
+    // Show results after form submission
+    function showResults() {
+        document.getElementById('results-section').classList.remove('hidden');
+    }
+    // Auto-trigger showing results if campaigns exist
+      window.onload = function () {
+        {% if ongoing_campaigns %}
+        openFormPopup();
+        showResults();
+         // Open the popup automatically if there are results
+        {% endif %}
+    }; 
+    document.addEventListener("DOMContentLoaded", function () {
+        const buttons = document.querySelectorAll(".register-btn");
+
+        buttons.forEach(button => {
+            button.addEventListener("click", function () {
+                const campaignId = this.getAttribute("data-campaign-id");
+
+                fetch("{% url 'home' %}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": "{{ csrf_token }}",
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ campaign_id: campaignId }),
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert("Registration successful!");
+                        location.reload(); // Reload the page to reflect updates
+                    } else {
+                        alert("Failed to register. Please try again.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("An error occurred. Please try again.");
+                });
+            });
+        });
+    }); 
+</script>   
+<div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+    <img src="{%static 'images/ind.png'%}"
+      alt="LeftImage" 
+      style="width: 100%; max-width: 600px; margin-right: 10px;">
+    
+    <p class="MuiTypography-root MuiTypography-body1 main-heading my-2 css-u5juv3" 
+      style="white-space: nowrap; font-weight: bold; font-size: 4vh !important; font-weight:700 !important; font-family: Roboto; text-align: center; color: rgb(57, 57, 160);">
+      Portal Highlights
+    </p>
+    
+    <img 
+      src="{%static 'images/ind.png'%}"
+      alt="RightImage" 
+      style="width: 100%; max-width: 600px; margin-left: 10px;">
+
+  </div style="margin-top:300px;">
+  <div class="row justify-content-center g-4" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; ">
+    <div class="col-12 col-md-6 col-lg-4 text-center" style="flex: 1 1 100%; max-width: 300px;">
+      <h3 class="flag-card-head" style="font-size: 18px; font-weight: 600; color: #800000;">Total Divisional Offices</h3>
+      <h1 class="flag-card-num" style="font-size: 32px; font-weight: bold; color: #1a73e8;">390</h1>
+    </div>
+    <div class="col-12 col-md-6 col-lg-4 text-center" style="flex: 1 1 100%; max-width: 300px;">
+      <h3 class="flag-card-head" style="font-size: 18px; font-weight: 600; color: #800000;">Total Post Offices Monitored</h3>
+      <h1 class="flag-card-num" style="font-size: 32px; font-weight: bold; color: #1a73e8;">34,213</h1>
+    </div>
+    <div class="col-12 col-md-6 col-lg-4 text-center" style="flex: 1 1 100%; max-width: 300px;">
+      <h3 class="flag-card-head" style="font-size: 18px; font-weight: 600; color: #800000;">Total public participation</h3>
+      <h1 class="flag-card-num" style="font-size: 32px; font-weight: bold; color: #1a73e8;">30,98,52,196</h1>
+    </div>
+  </div>
+  <footer>
+    <div class="container-fluid" style="text-align: center; background-image: url({%static 'images/homeFooter.png'%}); background-position: center center; background-size: cover; background-repeat: no-repeat; width: 100%; height: 60vh;">
+      <div class="row d-flex align-items-center justify-content-center" style="height: 100%; padding-top: 8%; color: white;">
+        <div class="col-lg-6 col-md-6 col-sm-12">
+          <div class="row d-flex align-items-center justify-content-center">
+            <div class="col-6 text-center" style="width: auto;">
+              <h4 class="text-start">Help and Support</h4>
+              <p class="text-start">011-408-46952</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6 col-md-6 col-sm-12">
+          <img class="img-fluid" src="{%static 'images/swachhata.png'%}" alt="footer" style="height: 30vh;">
+        </div>
+      </div>
+      <div class="row" style="background-color: rgb(255, 151, 0); color: rgb(0, 0, 0);">
+        <p class="MuiTypography-root MuiTypography-body2 css-68o8xu" style="color: white;">© Swachhata Hi Seva 2024. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+  
+</body>
+</html>

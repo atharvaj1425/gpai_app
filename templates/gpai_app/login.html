@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,37 +6,124 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Page</title>
     <style>
+        /* General Page Styling */
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            background-color: #E8F5E9;
             display: flex;
+            flex-direction: column; /* Stack elements vertically */
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
+            min-height: 100vh;
         }
-        .login-container {
-            background: #fff;
-            padding: 20px 30px;
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
+
+        /* Header Styling */
+        .row {
             width: 100%;
-            max-width: 400px;
+            background-color: white;
+            color: white;
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            box-sizing: border-box;
+            justify-content: space-between;
+            margin-bottom: 60px
         }
-        .login-container h2 {
+
+        .row img {
+            max-height: 80px;
+        }
+
+        .row .col-md-4 img {
+            display: block;
+        }
+
+        .row .col-md-8 img {
+            display: inline-block;
+            float: right;
+            margin-left: 10px;
+        }
+
+        /* Main Container */
+        .login-page {
+            display: flex;
+            flex-direction: row;
+            background-color: white;
+            width: 80%;
+            max-width: 900px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .left-panel {
+            background-color: #00796b;
+            color: white;
+            width: 40%;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .left-panel h1 {
+            font-size: 24px;
             margin-bottom: 20px;
             text-align: center;
-            color: #333;
         }
+
+        .left-panel img {
+            max-width: 200px;
+            margin-bottom: 10px;
+        }
+
+        .left-panel a {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            border: 2px solid white;
+            padding: 8px 16px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        .left-panel a:hover {
+            background-color: white;
+            color: #8BC34A;
+        }
+
+        .left-panel:hover {
+           background-color:#8BC34A
+        }
+
+        /* Right Panel (Form Section) */
+        .right-panel {
+            width: 60%;
+            padding: 40px;
+            background-color: #F5F5F5;
+        }
+
+        .right-panel h2 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
         .form-group {
             margin-bottom: 15px;
         }
+
         .form-group label {
             display: block;
             font-size: 14px;
             color: #555;
             margin-bottom: 5px;
         }
+
         .form-group input,
         .form-group select {
             width: 100%;
@@ -44,72 +132,93 @@
             border: 1px solid #ccc;
             border-radius: 5px;
         }
+
         .form-group select {
             appearance: none;
         }
+
         .btn {
             width: 100%;
             padding: 10px;
-            background-color: #007bff;
+            background-color: #00796b;
             color: white;
             border: none;
             border-radius: 5px;
             font-size: 16px;
             cursor: pointer;
+            margin-top: 10px
         }
+
         .btn:hover {
-            background-color: #0056b3;
+            background-color: #388E3C;
         }
+
         .forgot-password {
             text-align: center;
             margin-top: 15px;
         }
+
         .forgot-password a {
-            color: #007bff;
+            color: #00796b;
             text-decoration: none;
             font-size: 14px;
             cursor: pointer;
         }
+
         .forgot-password a:hover {
             text-decoration: underline;
         }
     </style>
-    <script>
-        function forgotPasswordAlert() {
-            alert("Please contact the administrator for password reset instructions.");
-        }
-    </script>
 </head>
 <body>
-    <div class="login-container">
-        {% if error_message %}
-            <div class="error-message">
-            <p>{{ error_message }}</p>
+    <!-- Header -->
+    <div class="row" id="header">
+        <div class="col-md-4">
+            <img class="img-responsive hidden-xs" height="80" src="{% static 'images/postnew.png' %}" id="india-post-logo" alt="India Post Logo">
+        </div>
+        <div class="col-md-8">
+            <img class="img-responsive hidden-xs" height="80" style="padding: 20px 30px 0px 10px;" src="{% static 'images/g20new.png' %}" alt="G20 Logo">
+            <img class="img-responsive hidden-xs" height="80" style="padding: 20px 30px 0px 10px;" src="{% static 'images/75years.png' %}" alt="75 Years of Independence">
+            <img class="img-responsive hidden-xs" height="80" style="padding: 20px 30px 0px 10px;" src="{% static 'images/symbol.png' %}" alt="Symbol">
+            <img class="img-responsive hidden-xs" height="80" style="padding: 20px 30px 0px 10px;" src="{% static 'images/life.png' %}" alt="LiFE">
+        </div>
+    </div>
+    
+    <!-- Login Page -->
+    <div class="login-page">
+        <!-- Left Panel -->
+        <div class="left-panel">
+            <img src="{% static 'images/logo.png' %}" alt="Logo">
+            <h1>Login for Divisional Officer<br>& Post Offices</h1>
+        </div>
+        
+        <!-- Right Panel -->
+        <div class="right-panel">
+            <h2>Login</h2>
+            <form action="login" method="POST">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Enter your username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                </div>
+                <div class="form-group">
+                    <label for="role">Role</label>
+                    <select id="role" name="role" required>
+                        <option value="post_office_user">Post Office User</option>
+                        <option value="divisional_office_user">Divisional Office User</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn">Login</button>
+            </form>
+            <div class="forgot-password">
+                <a href="javascript:void(0);" onclick="forgotPasswordAlert()">Forgot Password?</a>
             </div>
-        {% endif %}
-        <h2>Login</h2>
-        <form action="/" method="POST">
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" placeholder="Enter your username" required>
-            </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="Enter your password" required>
-            </div>
-            <div class="form-group">
-                <label for="role">Role</label>
-                <select id="role" name="role" required>
-                    <option value="post_office_user">Post Office User</option>
-                    <option value="divisional_office_user">Divisional Office User</option>
-                </select>
-            </div>
-            <button type="submit" class="btn">Login</button>
-        </form>
-        <div class="forgot-password">
-            <a href="javascript:void(0);" onclick="forgotPasswordAlert()">Forgot Password?</a>
-        </div>
+            <a href="{% url 'home' %}"><button type="submit" class="btn" >Return to Home </button></a>
+        </div>
     </div>
 </body>
 </html>

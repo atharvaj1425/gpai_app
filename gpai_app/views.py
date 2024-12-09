@@ -63,6 +63,95 @@ def generate_password(pin_code):
     """
     return make_password(str(pin_code))  # Using PINCode directly as password
 
+from django.shortcuts import render, redirect, get_object_or_404
+from django.utils.timezone import now
+from datetime import date
+from .models import Campaign_Drive, RecyclingRequest, UtilityBill
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+def home(request):
+    # Filter options from the GET request
+    venue = request.GET.get('venue', None)
+    
+    # Base query for ongoing campaigns (without any filters initially)
+    today = date.today()
+    ongoing_campaigns = Campaign_Drive.objects.filter(
+        start_date__gt=now().date(),  # Campaigns starting in the future
+        end_date__gte=today
+    )
+
+    # Apply Venue filter if provided
+    if venue:
+        ongoing_campaigns = ongoing_campaigns.filter(Venue__icontains=venue)
+
+    if request.method == "POST":
+        import json
+        data = json.loads(request.body)
+        campaign_id = data.get("campaign_id")
+        if campaign_id:
+            try:
+                campaign = Campaign_Drive.objects.get(campaign_drive_id=campaign_id)
+                campaign.number_of_people_registered += 1
+                campaign.save()
+                return JsonResponse({"success": True, "message": "Registered successfully!"})
+            except Campaign_Drive.DoesNotExist:
+                return JsonResponse({"success": False, "message": "Campaign not found."}, status=404)
+        return JsonResponse({"success": False, "message": "Invalid request."}, status=400)
+
+    # Fetch options for filters dynamically
+    available_venues = Campaign_Drive.objects.values_list('Venue', flat=True).distinct()
+
+    # Render homepage
+    return render(request, 'gpai_app/home.html', {
+        'ongoing_campaigns': ongoing_campaigns,
+        'available_venues': available_venues,
+    })
+
+def get_post_offices(request):
+    pincode = request.GET.get('pincode')
+    if not pincode:
+        return JsonResponse([], safe=False)
+    post_offices = PostOffice.objects.filter(pincode=pincode).values('name')
+    return JsonResponse(list(post_offices), safe=False)
+        
+
+def submit_recycling_request(request):
+    if request.method == 'POST':
+        name_of_recycler = request.POST.get('name_of_recycler')
+        phone_no = request.POST.get('phone_no')
+        recycle_item = request.POST.get('recycle_item')
+        num_of_items = request.POST.get('num_of_items')
+        quantity_to_recycle = request.POST.get('quantity_to_recycle')
+        pincode = request.POST.get('pincode')
+        post_office_name = request.POST.get('recycle_location')  # This is the name from the form input
+
+        try:
+            # Fetch the PostOffice instance based on the name provided
+            post_office = PostOffice.objects.get(name=post_office_name)
+            
+            # Create a new RecyclingRequest instance
+            RecyclingRequest.objects.create(
+                name_of_recycler=name_of_recycler,
+                phone_no=phone_no,
+                recycle_item=recycle_item,
+                num_of_items=num_of_items,
+                quantity_to_recycle=quantity_to_recycle,
+                pincode=pincode,
+                post_office_name=post_office  # Use the correct field name here
+            )
+            return redirect('home')  # Redirect to the homepage or a success page
+        except PostOffice.DoesNotExist:
+            # Handle case where the post office is not found in the database
+            return JsonResponse({'error': 'Post Office not found'}, status=404)
+
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+
+
+
 def login(request):
     error_message = None
     
@@ -136,6 +225,8 @@ def post_office_dashboard(request):
     
     return render(request, 'gpai_app/post_office_dashboard.html', context)
 
+import ast
+from collections import defaultdict
 
 def divisional_office_dashboard(request):
     # Retrieve user info from the session
@@ -160,16 +251,20 @@ def divisional_office_dashboard(request):
         .annotate(latest_timestamp=Max('timestamp')) \
         .order_by('-latest_timestamp')
 
-    # Create a dictionary for post office ID to latest cleanliness_status and timestamp mapping
+    # Create dictionaries to hold the mappings
     cleanliness_status_mapping = {}
+    cleanliness_score_mapping = {}
     timestamp_mapping = {}
 
+    # Process the latest images for each post office
     for item in latest_images:
         post_office_id = item['post_office']
         latest_timestamp = item['latest_timestamp']
         latest_image = Image.objects.filter(post_office_id=post_office_id, timestamp=latest_timestamp).first()
+
         if latest_image:
             cleanliness_status_mapping[post_office_id] = latest_image.cleanliness_status
+            cleanliness_score_mapping[post_office_id] = latest_image.cleanliness_score
             timestamp_mapping[post_office_id] = latest_image.timestamp
 
     # Serialize the post offices data for rendering pins
@@ -181,19 +276,138 @@ def divisional_office_dashboard(request):
             'pincode': office.pincode,
             'branch_type': office.branch_type,
             'delivery_status': office.delivery_status,
-            'cleanliness_status': cleanliness_status_mapping.get(office.post_office_id, "Unknown"),  # Default to "Unknown" if no data
-            'timestamp': timestamp_mapping.get(office.post_office_id, "Unknown")  # Default to "Unknown" if no data
+            'cleanliness_status': cleanliness_status_mapping.get(office.post_office_id, "Unknown"),
+            'cleanliness_score': cleanliness_score_mapping.get(office.post_office_id, "Unknown"),
+            'timestamp': timestamp_mapping.get(office.post_office_id, "Unknown")
         }
         for office in post_offices if office.latitude and office.longitude
     ]
 
+    # Waste categorization logic (separate from the map pin serialization)
+    waste_type_counts = defaultdict(lambda: defaultdict(int))
+
+    # Process waste types from the latest images
+    for item in latest_images:
+        post_office_id = item['post_office']
+        latest_timestamp = item['latest_timestamp']
+        latest_image = Image.objects.filter(post_office_id=post_office_id, timestamp=latest_timestamp).first()
+
+        if latest_image:
+            waste_type = latest_image.waste_type if latest_image.waste_type else "[]"
+            try:
+                waste_types = ast.literal_eval(waste_type)
+            except (ValueError, SyntaxError):
+                waste_types = []  # Default to an empty list if parsing fails
+
+            for waste in waste_types:
+                if 'plastic' in waste.lower():
+                    waste_type_counts['plastic'][post_office_id] += 1
+                if 'paper' in waste.lower():
+                    waste_type_counts['paper'][post_office_id] += 1
+                if 'cardboard' in waste.lower():
+                    waste_type_counts['cardboard'][post_office_id] += 1
+                if 'organic' in waste.lower():
+                    waste_type_counts['organic'][post_office_id] += 1
+
+    # Find the top 5 post offices for each waste type
+    top_post_offices_by_waste = {
+        waste_type: sorted(counts.items(), key=lambda x: x[1], reverse=True)[:5]
+        for waste_type, counts in waste_type_counts.items()
+    }
+
+    # Prepare data for charts
+    chart_data = {}
+    for waste_type, post_offices in top_post_offices_by_waste.items():
+        chart_data[waste_type] = {
+            'labels': [PostOffice.objects.get(post_office_id=post_office_id).name for post_office_id, _ in post_offices],
+            'data': [count for _, count in post_offices]
+        }
+
+    # Pass all the data to the context
     context = {
         'user_data': user_data,
         'post_offices': post_offices,
         'post_offices_json': json.dumps(post_offices_data, cls=DjangoJSONEncoder),
+        'chart_data': chart_data,  # Pass chart data for waste categorization
     }
     return render(request, 'gpai_app/divisional_office_dashboard.html', context)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# def divisional_office_dashboard(request):
+#     # Retrieve user info from the session
+#     username = request.session.get('username')
+#     role = request.session.get('role')
+
+#     if role != 'divisional_office_user':
+#         return redirect('login')  # Redirect to login if not authorized
+
+#     # Fetch the divisional office details
+#     user_data = DivisionalOffice.objects.get(username=username)
+    
+#     # Fetch post offices under this division
+#     post_offices = PostOffice.objects.filter(division=user_data.name)
+
+#     fetch_and_populate_images()
+#     process_images_with_gemini()
+
+#     # Fetch latest image for each post office
+#     latest_images = Image.objects.filter(post_office__in=post_offices) \
+#         .values('post_office') \
+#         .annotate(latest_timestamp=Max('timestamp')) \
+#         .order_by('-latest_timestamp')
+
+#     # Create dictionaries to hold the mappings
+#     cleanliness_status_mapping = {}
+#     cleanliness_score_mapping = {}
+#     timestamp_mapping = {}
+
+#     for item in latest_images:
+#         post_office_id = item['post_office']
+#         latest_timestamp = item['latest_timestamp']
+#         latest_image = Image.objects.filter(post_office_id=post_office_id, timestamp=latest_timestamp).first()
+
+#         if latest_image:
+#             cleanliness_status_mapping[post_office_id] = latest_image.cleanliness_status
+#             cleanliness_score_mapping[post_office_id] = latest_image.cleanliness_score
+#             timestamp_mapping[post_office_id] = latest_image.timestamp
+#     # Serialize the post offices data for rendering pins
+#     post_offices_data = [
+#         {
+#             'name': office.name,
+#             'latitude': float(office.latitude) if office.latitude else None,
+#             'longitude': float(office.longitude) if office.longitude else None,
+#             'pincode': office.pincode,
+#             'branch_type': office.branch_type,
+#             'delivery_status': office.delivery_status,
+#             'cleanliness_status': cleanliness_status_mapping.get(office.post_office_id, "Unknown"),
+#             'cleanliness_score': cleanliness_score_mapping.get(office.post_office_id, "Unknown"),
+#             'timestamp': timestamp_mapping.get(office.post_office_id, "Unknown")
+#         }
+#         for office in post_offices if office.latitude and office.longitude
+#     ]
+#     context = {
+#         'user_data': user_data,
+#         'post_offices': post_offices,
+#         'post_offices_json': json.dumps(post_offices_data, cls=DjangoJSONEncoder),
+#     }
+#     return render(request, 'gpai_app/divisional_office_dashboard.html', context)
 
 
 # Configure Logging
@@ -410,6 +624,8 @@ def post_office_monitored(request):
     
     # Fetch post offices under this division
     post_offices = PostOffice.objects.filter(division=user_data.name)
+    campaigns = Campaign_Drive.objects.filter(post_office__in=post_offices)
+
 
     fetch_and_populate_images()
     process_images_with_gemini()
@@ -441,6 +657,7 @@ def post_office_monitored(request):
         'user_data': user_data_context,
         'post_offices': post_offices,
         'images': images,  # Only the latest image for each post office
+        'campaigns': campaigns,
         'divisional_office_name': user_data.name,
     }
 
@@ -470,6 +687,18 @@ def view_post_office_history(request, post_office_id):
         'images': images,
         'divisional_office_name': post_office.division
     })
+
+
+def view_campaign_history(request, post_office_id):
+    post_office = get_object_or_404(PostOffice, post_office_id=post_office_id)
+    
+    # Separate campaigns into ongoing and completed
+    campaigns = post_office.campaigns.all()
+    ongoing_campaigns = campaigns.filter(end_date__gte=now().date())
+    completed_campaigns = campaigns.filter(end_date__lt=now().date())
+    return render(request, "gpai_app/campaign_history.html", {'post_office': post_office, 'ongoing_campaigns': ongoing_campaigns,'completed_campaigns': completed_campaigns,})
+
+
 
 from django.shortcuts import render, get_object_or_404
 from .models import PostOffice
@@ -566,6 +795,8 @@ def utility_bills(request, post_office_id):
     Displays LiFE practices for a specific post office and handles utility bill uploads.
     """
     post_office = get_object_or_404(PostOffice, post_office_id=post_office_id)
+    utility_bills = UtilityBill.objects.filter(post_office=post_office).order_by('-month_year')
+
 
     if request.method == 'POST' and 'upload_bills' in request.POST:
         electricity_bill = request.FILES.get('electricity_bill')
@@ -685,8 +916,45 @@ def utility_bills(request, post_office_id):
             messages.error(request, f"An error occurred: {e}")
             return render(request, 'gpai_app/utility_bills.html', {'post_office': post_office})
 
-    return render(request, 'gpai_app/utility_bills.html', {'post_office': post_office})
+    return render(request, 'gpai_app/utility_bills.html', {'post_office': post_office, 'utility_bills': utility_bills})
 
+from django.shortcuts import get_object_or_404, render, redirect
+from django.utils.timezone import now
+from .models import PostOffice, Campaign_Drive, RecyclingRequest
+from .forms import CampaignForm
+
+def drive_campaigns(request, post_office_id):
+    # Fetch the post office
+    post_office = get_object_or_404(PostOffice, post_office_id=post_office_id)
+    
+    # Separate campaigns into ongoing and completed
+    campaigns = post_office.campaigns.all()
+    ongoing_campaigns = campaigns.filter(end_date__gte=now().date())
+    completed_campaigns = campaigns.filter(end_date__lt=now().date())
+
+    # Handle campaign creation
+    if request.method == 'POST':
+        form = CampaignForm(request.POST)
+        if form.is_valid():
+            campaign = form.save(commit=False)
+            campaign.post_office = post_office
+            campaign.save()
+            return redirect('drive_campaigns', post_office_id=post_office_id)
+    else:
+        form = CampaignForm()
+
+    return render(request, 'gpai_app/campaigns.html', {
+        'post_office': post_office,
+        'ongoing_campaigns': ongoing_campaigns,
+        'completed_campaigns': completed_campaigns,
+        'form': form
+    })
+
+def life_practices(request, post_office_id):
+    post_office = get_object_or_404(PostOffice, post_office_id=post_office_id)
+    recyclerequests = RecyclingRequest.objects.filter(post_office_name_id=post_office)
+
+    return render(request,"gpai_app/life_practices.html", {'post_office': post_office, 'recyclerequests': recyclerequests})
 
 
 

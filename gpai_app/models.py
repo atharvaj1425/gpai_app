@@ -1,4 +1,5 @@
 from django.db import models
+from datetime import date
 
 class DivisionalOffice(models.Model):
     divisional_office_id = models.AutoField(primary_key=True)
@@ -42,20 +43,6 @@ class PostOffice(models.Model):
 
     def __str__(self):
         return self.name
-
-class ComplianceScore(models.Model):
-    compliance_id = models.AutoField(primary_key=True)
-    post_office = models.ForeignKey(
-        PostOffice, 
-        on_delete=models.CASCADE, 
-        related_name='compliance_scores'
-    )
-    compliance_score = models.DecimalField(max_digits=5, decimal_places=2)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"Compliance for {self.post_office.name}: {self.compliance_score}"
 
 class Image(models.Model):
     image_id = models.AutoField(primary_key=True)
@@ -101,4 +88,54 @@ class UtilityBill(models.Model):
     def __str__(self):
         return f"Utility Bill - {self.post_office.name} ({self.month_year})"
 
+class Campaign_Drive(models.Model):
+    campaign_drive_id = models.AutoField(primary_key=True)  # Unique ID for each campaign
+    post_office = models.ForeignKey(
+        'PostOffice',  # Reference to PostOffice model
+        on_delete=models.CASCADE,
+        related_name='campaigns'
+    )
+    campaign_drive_name = models.CharField(max_length=255)  # Name of the drive/campaign
+    description = models.TextField(max_length=65535, blank=True, null=True)  # Detailed description about the drive
+    start_date = models.DateField()  # Start date of the campaign
+    end_date = models.DateField()  # End date of the campaign
+    Venue = models.CharField(max_length=255, null=True)
+    number_of_people_registered = models.PositiveIntegerField(default=0)  # Number of people registered
 
+    def is_active(self):
+        """
+        Check if the campaign is active based on the current date.
+        """
+        today = date.today()
+        return self.start_date <= today <= self.end_date
+
+    def __str__(self):
+        return f"{self.campaign_drive_name} ({self.post_office.name})"
+
+class RecyclingRequest(models.Model):
+    recycle_id = models.AutoField(primary_key=True)  # Auto-incrementing field
+    name_of_recycler = models.CharField(max_length=255)
+    phone_no = models.CharField(max_length=15)
+    recycle_item = models.CharField(max_length=255)
+    num_of_items = models.PositiveIntegerField()
+    quantity_to_recycle = models.FloatField()
+    pincode = models.CharField(max_length=6)
+    post_office_name = models.ForeignKey('PostOffice', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.name_of_recycler} - {self.recycle_item}"
+
+
+class ComplianceScore(models.Model):
+    compliance_id = models.AutoField(primary_key=True)
+    post_office = models.ForeignKey(
+        PostOffice, 
+        on_delete=models.CASCADE, 
+        related_name='compliance_scores'
+    )
+    compliance_score = models.DecimalField(max_digits=5, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Compliance for {self.post_office.name}: {self.compliance_score}"

@@ -96,7 +96,7 @@
                         <a class="nav-link" href="{% url 'utility_bills' post_office.post_office_id %}">Utility Bills</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">LiFE Practices</a>
+                        <a class="nav-link" href="{% url 'life_practices' post_office.post_office_id %}">LiFE Practices</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'logout' %}">Logout</a>
@@ -109,18 +109,23 @@
     
 
     <div class="container mt-5">
-        <h2 class="text-center">Post Office Dashboard</h2>
+        
 
         <!-- Display Alert if the Post Office is Unclean -->
         {% if is_unclean %}
-            <div class="alert alert-danger" role="alert">
-                This post office is <strong>UNCLEAN</strong> based on the latest cleanliness status.
-            </div>
-        {% endif %}
+    <div class="alert alert-danger" role="alert">
+        This post office is <strong>UNCLEAN</strong> based on the latest cleanliness status.
+    </div>
+    {% endif %}
 
-        <!-- Display Post Office Details -->
-        <div class="card mb-4">
-            <div class="card-body">
+    <div class="container mt-5">
+
+        <!-- Display Post Office Details and Image Side by Side -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <!-- Post Office Information -->
+            <div class="col-md-6">
                 <h4 class="card-title">{{ post_office.name }}</h4>
                 <p class="card-text"><strong>Pincode:</strong> {{ post_office.pincode }}</p>
                 <p class="card-text"><strong>Branch Type:</strong> {{ post_office.branch_type }}</p>
@@ -131,24 +136,21 @@
                 <p class="card-text"><strong>Division:</strong> {{ post_office.division }}</p>
                 <p class="card-text"><strong>Region:</strong> {{ post_office.region }}</p>
             </div>
-        </div>
-
-        <!-- Display Latest Image Information -->
-        {% if latest_image %}
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Latest Cleanliness Status</h5>
+            
+            <!-- Image Section -->
+            <div class="col-md-5 text-center">
+                {% if latest_image %}
                     <img src="{{ latest_image.image_url }}" alt="Post Office Image" class="img-fluid mb-3">
                     <p><strong>Cleanliness Status:</strong> {{ latest_image.cleanliness_status }}</p>
                     <p><strong>Cleanliness Score:</strong> {{ latest_image.cleanliness_score }}</p>
                     <p><strong>Waste Type:</strong> {{ latest_image.waste_type }}</p>
                     <p><strong>Timestamp:</strong> {{ latest_image.timestamp }}</p>
-                </div>
+                {% else %}
+                    <p>No image available for the latest timestamp.</p>
+                {% endif %}
             </div>
-        {% else %}
-            <p>No image available for the latest timestamp.</p>
-        {% endif %}
+        </div>
     </div>
-
+</div>
 </body>
 </html>
