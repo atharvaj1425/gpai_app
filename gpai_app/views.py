@@ -66,7 +66,7 @@ def generate_password(pin_code):
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.timezone import now
 from datetime import date
-from .models import Campaign_Drive, RecyclingRequest, UtilityBill
+from .models import Campaign_Drive, RecyclingRequest, UtilityBill, Citizen
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -145,7 +145,7 @@ def submit_recycling_request(request):
             return redirect('home')  # Redirect to the homepage or a success page
         except PostOffice.DoesNotExist:
             # Handle case where the post office is not found in the database
-            return JsonResponse({'error': 'Post Office not found'}, status=404)
+            return JsonResponse({'error': 'Post Office not found' }, status=404)
 
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
@@ -187,9 +187,70 @@ def login(request):
                     error_message = "Invalid credentials for Divisional Office User."
             except DivisionalOffice.DoesNotExist:
                 error_message = "Divisional Office User not found."
+        
+        elif role == 'citizen':
+            # Authenticate from DivisionalOffice table
+            try:
+                user = Citizen.objects.get(username=username)
+                if user.password == password:  # Use `check_password` if the password is hashed
+                    # Save user info in session
+                    request.session['username'] = username
+                    request.session['role'] = role
+                    return redirect('citizen_dashboard')
+                else:
+                    error_message = "Invalid credentials for User."
+            except DivisionalOffice.DoesNotExist:
+                error_message = "Divisional Office User not found."
 
     # If credentials are invalid or a GET request, render the login page
     return render(request, 'gpai_app/login.html', {'error_message': error_message})
+
+from django.shortcuts import render, redirect
+from .models import Citizen, Campaign_Drive
+
+def citizen_dashboard(request):
+    citizen_username = request.session.get('username')
+    role = request.session.get('role')
+    if role != 'citizen':
+        return redirect('login')  # Redirect to login if no session data exists
+
+    citizen = Citizen.objects.get(username=citizen_username)
+    activity_entries = ActivityEntry.objects.filter(citizen=citizen)
+    today = date.today()
+    ongoing_campaigns = Campaign_Drive.objects.filter(
+        start_date__gt=now().date(),  # Campaigns starting in the future
+        end_date__gte=today
+    )
+
+    context = {
+        'citizen': citizen,
+        'ongoing_campaigns': ongoing_campaigns,
+        'activity_entries': activity_entries,
+    }
+    return render(request, 'gpai_app/citizen_dashboard.html', context)
+
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .models import Campaign_Drive, Citizen, ActivityEntry
+#@login_required
+def register_campaign(request, user_id, campaign_drive_id):
+    campaign = get_object_or_404(Campaign_Drive, campaign_drive_id=campaign_drive_id)
+    citizen = get_object_or_404(Citizen, user_id=user_id)
+
+    # Check if already registered
+    if ActivityEntry.objects.filter(citizen=citizen, campaign_drive=campaign).exists():
+        messages.warning(request, "You are already registered for this campaign.")
+    else:
+        # Register citizen and award points
+        ActivityEntry.objects.create(citizen=citizen, campaign_drive=campaign)
+        citizen.points += 15
+        citizen.save()
+        messages.success(request, f"Successfully registered for {campaign.campaign_drive_name}!")
+
+    return redirect('citizen_dashboard')  # Redirect to your dashboard page
+
+
 
 def user_logout(request):
     logout(request)

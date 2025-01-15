@@ -18,4 +18,6 @@ urlpatterns = [
     path('image_table', views.image_table, name="image_table"),
     path('get-post-offices/', views.get_post_offices, name='get_post_offices'),
     path('submit-recycling-request/', views.submit_recycling_request, name='submit_recycling_request'),
+    path('citizen_dashboard', views.citizen_dashboard, name='citizen_dashboard'),
+    path('register/<int:user_id>/<int:campaign_drive_id>/', views.register_campaign, name='register_campaign'),
 ]

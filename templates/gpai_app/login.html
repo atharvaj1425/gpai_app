@@ -169,6 +169,11 @@
             text-decoration: underline;
         }
     </style>
+    <script>
+        function forgotPasswordAlert() {
+            alert("Feature under development. Please contact the administrator.");
+        }
+    </script>
 </head>
 <body>
     <!-- Header -->
@@ -210,6 +215,7 @@
                     <select id="role" name="role" required>
                         <option value="post_office_user">Post Office User</option>
                         <option value="divisional_office_user">Divisional Office User</option>
+                        <option value="citizen">Citizen</option>
                     </select>
                 </div>
                 <button type="submit" class="btn">Login</button>
@@ -217,7 +223,9 @@
             <div class="forgot-password">
                 <a href="javascript:void(0);" onclick="forgotPasswordAlert()">Forgot Password?</a>
             </div>
-            <a href="{% url 'home' %}"><button type="submit" class="btn" >Return to Home </button></a>
+            <a href="{% url 'home' %}">
+                <button type="button" class="btn">Return to Home</button>
+            </a>
         </div>
     </div>
 </body>

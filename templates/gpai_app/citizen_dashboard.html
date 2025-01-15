@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Citizen Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            margin-top: 20px;
+            color: #4CAF50;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table thead {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        table th, table td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        table tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        table tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 15px;
+            text-decoration: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-info {
+            background-color: #17a2b8;
+        }
+
+        .btn-info:hover {
+            background-color: #138496;
+        }
+
+        .no-campaigns {
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #ffcccc;
+            color: #d8000c;
+            border: 1px solid #d8000c;
+            border-radius: 5px;
+        }
+
+        @media (max-width: 768px) {
+            table th, table td {
+                font-size: 14px;
+            }
+
+            .btn {
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Welcome, {{ citizen.username }}!</h1>
+    </header>
+
+    <div class="container">
+        <h2>Your Activity Entries</h2>
+        <h2>Your Activity Entries</h2>
+{% if activity_entries %}
+    <table>
+        <thead>
+            <tr>
+                <th>Campaign Name</th>
+                <th>Description</th>
+                <th>Venue</th>
+                <th>Registration Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in activity_entries %}
+            <tr>
+                <td>{{ entry.campaign_drive.campaign_drive_name }}</td>
+                <td>{{ entry.campaign_drive.description }}</td>
+                <td>{{ entry.campaign_drive.venue }}</td>
+                <td>{{ entry.registration_date }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No activity entries found.</p>
+{% endif %}
+
+        <h2>Ongoing Campaigns</h2>
+        {% if ongoing_campaigns %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Campaign Name</th>
+                        <th>Description</th>
+                        <th>Venue</th>
+                        <th>Register</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for campaign in ongoing_campaigns %}
+                    <tr>
+                        <td>{{ campaign.campaign_drive_name }}</td>
+                        <td>{{ campaign.description }}</td>
+                        <td>{{ campaign.Venue }}</td>
+                        <td>
+                            <a href="{% url 'register_campaign' campaign.campaign_drive_id user_id %}" class="btn btn-info">Register</a>
+                        </td>                        
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="no-campaigns">There are no ongoing campaigns at the moment.</div>
+        {% endif %}
+
+        <h2>Filter Ongoing Campaigns</h2>
+    </div>
+</body>
+</html>

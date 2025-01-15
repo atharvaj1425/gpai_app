@@ -125,7 +125,34 @@ class RecyclingRequest(models.Model):
     def __str__(self):
         return f"{self.name_of_recycler} - {self.recycle_item}"
 
+class Citizen(models.Model):
+    citizen_id = models.AutoField(primary_key=True)  # Auto-incrementing citizen ID
+    username = models.CharField(max_length=255, unique=True)  # Unique username for login
+    password = models.CharField(max_length=128)  # Store password securely (use a hasher)
+    total_points = models.IntegerField(default=0)  # Total points accumulated by citizen
+    role = models.CharField(max_length=50, default='citizen')
 
+    def __str__(self):
+        return f"{self.username} (ID: {self.citizen_id})"
+
+class ActivityEntry(models.Model):
+    activity_id = models.AutoField(primary_key=True)  # Auto-incrementing activity ID
+
+    citizen = models.ForeignKey(Citizen, on_delete=models.CASCADE)  # Foreign key to Citizen
+    recycle = models.ForeignKey('RecyclingRequest', on_delete=models.CASCADE, null=True, blank=True)  # Foreign key to RecyclingRequest (optional)
+    campaign = models.ForeignKey('Campaign_Drive', on_delete=models.CASCADE, null=True, blank=True)  # Foreign key to Campaign_Drive (optional)
+    description = models.TextField(null=True, blank=True)  # Optional field for additional activity details
+    venue = models.CharField(max_length=255, null=True, blank=True)  # Optional venue for the activity
+    recycle_score = models.IntegerField(default=0)  # Points earned for recycling activity
+    campaign_score = models.IntegerField(default=0)  # Points earned for participating in a campaign
+
+    def get_campaign_description(self):
+        if self.campaign:
+            return self.campaign.description
+        return None
+
+    def __str__(self):
+        return f"Activity ID: {self.activity_id} - {self.description}"
 class ComplianceScore(models.Model):
     compliance_id = models.AutoField(primary_key=True)
     post_office = models.ForeignKey(

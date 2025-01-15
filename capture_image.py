@@ -8,11 +8,18 @@ cloudinary.config(
     cloud_name="dswkvnomk",  # Replace with your Cloudinary cloud name
     api_key="651324994684599",        # Replace with your Cloudinary API key
     api_secret="JgsKsiuw49IdP5uN-SFAJfG51Ac"  # Replace with your Cloudinary API secret
+    # cloud_name="ddo8yiwtk",
+    # api_key="245492745336175",
+    # api_secret="YXGW-2zzBFjo0U1kWRkqhjpP4Hk"
 )
 
 # Coordinates for the webcam location
-latitude = 19.029527
-longitude = 72.854820
+# latitude = 19.029527
+# longitude = 72.854820
+latitude = 12.9939595
+longitude = 80.1706653
+# latitude = 12.880649
+# longitude = 80.226695
 
 # Function to capture an image and upload with metadata
 def capture_image_with_metadata():

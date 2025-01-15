@@ -37,7 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'gpai_app.apps.GpaiAppConfig'
+    'gpai_app.apps.GpaiAppConfig',
+    # 'django_ratelimit'
 ]
 
 MIDDLEWARE = [

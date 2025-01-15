@@ -463,6 +463,32 @@
     </style>
 </head>
 <body>  
+  <div id="google_translate_element"></div>
+
+<script>
+    function googleTranslateElementInit() {
+        new google.translate.TranslateElement(
+            {
+                pageLanguage: 'en',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE, // Use a simple dropdown
+            },
+            'google_translate_element'
+        );
+    }
+</script>
+<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+<script>
+    // Hide the "Powered by Google" text
+    document.addEventListener('DOMContentLoaded', function () {
+        // Add a small delay to ensure the widget is fully loaded
+        setTimeout(() => {
+            let branding = document.querySelector('.goog-te-gadget > span');
+            if (branding) branding.style.display = 'none'; // Hide the branding text
+        }, 1000);
+    });
+</script>
+
     <div class="row" id="header" style="margin-top: 5px; margin-bottom: 5px; max-height:80px;">
         <div class="col-md-4">
 <img class="img-responsive hidden-xs" height="80" src="{% static 'images/postnew.png' %}" id="india-post-logo" alt="India Post Logo">
